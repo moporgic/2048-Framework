@@ -37,24 +37,26 @@ public:
 	void show() const {
 		int block = std::min(data.size(), this->block);
 		size_t sum = 0, max = 0, opc = 0, stat[16] = { 0 };
+		uint64_t duration = 0;
 		auto it = data.end();
 		for (int i = 0; i < block; i++) {
 			auto& path = *(--it);
 			board game;
-			opc += path.size();
 			size_t score = 0;
 			for (const action& move : path)
 				score += move.apply(game);
 			sum += score;
 			max = std::max(score, max);
+			opc += path.size();
 			int tile = 0;
 			for (int i = 0; i < 16; i++)
 				tile = std::max(tile, game(i));
 			stat[tile]++;
+			duration += (path.tock_time() - path.tick_time());
 		}
 		float avg = float(sum) / block;
 		float coef = 100.0 / block;
-		float ops = opc * 1000.0 / (data.back().tock_time() - it->tick_time());
+		float ops = opc * 1000.0 / duration;
 		std::cout << data.size() << "\t";
 		std::cout << "avg = " << int(avg) << ", ";
 		std::cout << "max = " << int(max) << ", ";
@@ -87,6 +89,10 @@ public:
 	void close_episode(const bool& disp = true) {
 		data.back().tock();
 		if (disp && data.size() % block == 0) show();
+	}
+
+	board make_empty_board() {
+		return {};
 	}
 
 	void save_action(const action& move) {
