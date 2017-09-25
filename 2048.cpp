@@ -283,7 +283,7 @@ private:
 
 class statistic {
 public:
-	statistic(const size_t& total, const size_t& unit = 0) : total(total), unit(unit ? unit : total), loop(0) {}
+	statistic(const size_t& total, const size_t& unit = 0) : total(total), unit(unit ? unit : total) {}
 
 public:
 	/**
@@ -307,9 +307,9 @@ public:
 	 *  '22.4%': 22.4% (224 games) terminated with 8192-tiles (the largest) in saved games
 	 */
 	void show() {
-		int unit = std::min(cache.size(), this->unit);
+		int unit = std::min(data.size(), this->unit);
 		size_t sum = 0, max = 0, opc = 0, stat[16] = { 0 };
-		auto it = cache.end();
+		auto it = data.end();
 		for (int i = 0; i < unit; i++) {
 			auto& path = *(--it);
 			board game;
@@ -326,8 +326,8 @@ public:
 		}
 		float avg = float(sum) / unit;
 		float coef = 100.0 / unit;
-		float ops = opc * 1000.0 / (cache.back().tock_time() - it->tick_time());
-		std::cout << cache.size() << "\t";
+		float ops = opc * 1000.0 / (data.back().tock_time() - it->tick_time());
+		std::cout << data.size() << "\t";
 		std::cout << "avg = " << int(avg) << ", ";
 		std::cout << "max = " << int(max) << ", ";
 		std::cout << "ops = " << int(ops) << std::endl;
@@ -340,28 +340,60 @@ public:
 		std::cout << std::endl;
 	}
 
-	void open_episode() {
-		loop++;
-		cache.emplace_back();
-		cache.back().tick();
+	void summary() {
+		auto unit_temp = unit;
+		unit = data.size();
+		show();
+		unit = unit_temp;
 	}
 
-	void close_episode() {
-		cache.back().tock();
-		if (loop % unit == 0) show();
+	void open_episode() {
+		data.emplace_back();
+		data.back().tick();
+	}
+
+	void close_episode(const bool& disp = true) {
+		data.back().tock();
+		if (disp && data.size() % unit == 0) show();
 	}
 	
-	bool is_finish() const {
-		return loop >= total;
+	bool is_finished() const {
+		return data.size() >= total;
 	}
 
 	void save_action(const action& move) {
-		cache.back().push_back(move);
+		data.back().push_back(move);
 	}
 
-	agent& who_take_turns(agent& play, agent& evil) {
+	agent& take_turns(agent& play, agent& evil) {
 		// 1:play 0:evil
-		return (std::max(cache.back().size() + 1, 2ull) % 2) ? play : evil;
+		return (std::max(data.back().size() + 1, 2ull) % 2) ? play : evil;
+	}
+
+	friend std::ostream& operator <<(std::ostream& out, const statistic& stat) {
+		auto total = stat.total;
+		auto unit = stat.unit;
+		auto size = stat.data.size();
+		out.write(reinterpret_cast<char*>(&total), sizeof(total));
+		out.write(reinterpret_cast<char*>(&unit), sizeof(unit));
+		out.write(reinterpret_cast<char*>(&size), sizeof(size));
+		for (const record& rec : stat.data) out << rec;
+		return out;
+	}
+	friend std::istream& operator >>(std::istream& in, statistic& stat) {
+		auto total = stat.total;
+		auto unit = stat.unit;
+		auto size = stat.data.size();
+		in.read(reinterpret_cast<char*>(&total), sizeof(total));
+		in.read(reinterpret_cast<char*>(&unit), sizeof(unit));
+		in.read(reinterpret_cast<char*>(&size), sizeof(size));
+		stat.total = total;
+		stat.unit = unit;
+		for (size_t i = 0; i < size; i++) {
+			stat.data.emplace_back();
+			in >> stat.data.back();
+		}
+		return in;
 	}
 
 private:
@@ -372,6 +404,30 @@ private:
 		void tock() { time[1] = milli(); }
 		uint64_t tick_time() const { return time[0]; }
 		uint64_t tock_time() const { return time[1]; }
+
+		friend std::ostream& operator <<(std::ostream& out, const record& rec) {
+			auto size = rec.size();
+			auto time = rec.time;
+			out.write(reinterpret_cast<char*>(&size), sizeof(size));
+			for (const action& act : rec) {
+				out.write(reinterpret_cast<const char*>(&act), sizeof(act));
+			}
+			out.write(reinterpret_cast<const char*>(time), sizeof(time[0]) * 2);
+			return out;
+		}
+		friend std::istream& operator >>(std::istream& in, record& rec) {
+			auto size = rec.size();
+			auto time = rec.time;
+			in.read(reinterpret_cast<char*>(&size), sizeof(size));
+			rec.reserve(size);
+			for (auto i = 0ull; i < size; i++) {
+				rec.emplace_back();
+				in.read(reinterpret_cast<char*>(&rec.back()), sizeof(rec.back()));
+			}
+			in.read(reinterpret_cast<char*>(time), sizeof(time[0]) * 2);
+			return in;
+		}
+
 	private:
 		uint64_t milli() const {
 			auto now = std::chrono::system_clock::now().time_since_epoch();
@@ -382,22 +438,50 @@ private:
 
 	size_t total;
 	size_t unit;
-	size_t loop;
-	std::list<record> cache;
+	std::list<record> data;
 };
 
 int main(int argc, const char* argv[]) {
-	std::cout << "2048-Demo" << std::endl;
+	std::cout << "2048-Demo: ";
+	std::copy(argv, argv + argc, std::ostream_iterator<const char*>(std::cout, " "));
+	std::cout << std::endl << std::endl;
+
+	size_t total = 1000, unit = 0;
+	std::string load, save;
+	bool summary = false;
+	for (int i = 1; i < argc; i++) {
+		std::string para(argv[i]);
+		if (para.find("--total=") == 0) {
+			total = std::stoull(para.substr(para.find("=") + 1));
+		} else if (para.find("--unit=") == 0) {
+			unit = std::stoull(para.substr(para.find("=") + 1));
+		} else if (para.find("--load=") == 0) {
+			load = para.substr(para.find("=") + 1);
+		} else if (para.find("--save=") == 0) {
+			save = para.substr(para.find("=") + 1);
+		} else if (para.find("--summary") == 0) {
+			summary = true;
+		}
+	}
 
 	player play;
 	random evil;
 
-	statistic stat(10000);
-	while (!stat.is_finish()) {
+	statistic stat(total, unit);
+
+	if (load.size()) {
+		std::ifstream in;
+		in.open(load.c_str(), std::ios::in | std::ios::binary);
+		if (!in.is_open()) return -1;
+		in >> stat;
+		in.close();
+	}
+
+	while (!stat.is_finished()) {
 		stat.open_episode();
 		board game;
 		while (true) {
-			agent& who = stat.who_take_turns(play, evil);
+			agent& who = stat.take_turns(play, evil);
 			action move = who.take_action(game);
 			int reward = move.apply(game);
 			if (reward == -1) break;
@@ -405,6 +489,19 @@ int main(int argc, const char* argv[]) {
 			if (who.check_for_win(game)) break;
 		}
 		stat.close_episode();
+	}
+
+	if (summary) {
+		stat.summary();
+	}
+
+	if (save.size()) {
+		std::ofstream out;
+		out.open(save.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+		if (!out.is_open()) return -1;
+		out << stat;
+		out.flush();
+		out.close();
 	}
 
 	return 0;
