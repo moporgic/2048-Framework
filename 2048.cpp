@@ -44,9 +44,6 @@ int main(int argc, const char* argv[]) {
 		}
 	}
 
-	player play;
-	random evil;
-
 	statistic stat(total, block);
 
 	if (load.size()) {
@@ -57,9 +54,15 @@ int main(int argc, const char* argv[]) {
 		in.close();
 	}
 
+	player play;
+	random evil;
+
 	while (!stat.is_finished()) {
+		play.initialize();
+		evil.initialize();
+
 		stat.open_episode();
-		board game;
+		board game = stat.make_empty_board();
 		while (true) {
 			agent& who = stat.take_turns(play, evil);
 			action move = who.take_action(game);
@@ -69,6 +72,9 @@ int main(int argc, const char* argv[]) {
 			if (who.check_for_win(game)) break;
 		}
 		stat.close_episode();
+
+		play.finalize();
+		evil.finalize();
 	}
 
 	if (summary) {
