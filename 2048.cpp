@@ -310,14 +310,14 @@ private:
 
 class statistic {
 public:
-	statistic(const size_t& total, const size_t& unit = 1000) : total(total), unit(unit), loop(0) {}
+	statistic(const size_t& total, const size_t& unit = 0) : total(total), unit(unit ? unit : total), loop(0) {}
 
 public:
 	/**
 	 * show the statistic of last unit games
 	 *
 	 * the format would be
-	 * 1000   mean = 273901  max = 382324
+	 * 1000   avg = 273901, max = 382324, ops = 241563
 	 *        512     100%   (0.3%)
 	 *        1024    99.7%  (0.2%)
 	 *        2048    99.5%  (1.1%)
@@ -327,8 +327,9 @@ public:
 	 *
 	 * where (assume that unit = 1000)
 	 *  '1000': current index (n)
-	 *  'mean = 273901': the average score of saved games is 273901
+	 *  'avg = 273901': the average score of saved games is 273901
 	 *  'max = 382324': the maximum score of saved games is 382324
+	 *  'ops = 241563': the average speed of saved games is 241563
 	 *  '93.7%': 93.7% (937 games) reached 8192-tiles in saved games (a.k.a. win rate of 8192-tile)
 	 *  '22.4%': 22.4% (224 games) terminated with 8192-tiles (the largest) in saved games
 	 */
@@ -353,17 +354,15 @@ public:
 		float avg = float(sum) / unit;
 		float coef = 100.0 / unit;
 		float ops = opc * 1000.0 / (cache.back().tock_time() - it->tick_time());
-		std::cout << "statistic for record " << (cache.size() - unit + 1) << " ~ " << cache.size() << ":" << std::endl;
-		std::cout << "\t" "avg = " << int(avg) << std::endl;
-		std::cout << "\t" "max = " << int(max) << std::endl;
-		std::cout << "\t" "ops = " << int(ops) << std::endl;
-		std::cout << "distribution:" << std::endl;
-		std::cout << "\t" "tile" "\t" "win" "\t" "rate" << std::endl;
+		std::cout << cache.size() << "\t";
+		std::cout << "avg = " << int(avg) << ", ";
+		std::cout << "max = " << int(max) << ", ";
+		std::cout << "ops = " << int(ops) << std::endl;
 		for (int t = 0, c = 0; c < unit; c += stat[t++]) {
 			if (stat[t] == 0) continue;
 			int accu = std::accumulate(stat + t, stat + 16, 0);
 			std::cout << "\t" << ((1 << t) & -2u) << "\t" << (accu * coef) << "%";
-			std::cout << "\t" << (stat[t] * coef) << "%" << std::endl;
+			std::cout << "\t(" << (stat[t] * coef) << "%)" << std::endl;
 		}
 		std::cout << std::endl;
 	}
@@ -379,7 +378,9 @@ public:
 		if (loop % unit == 0) show();
 	}
 	
-	bool is_finish() const { return loop >= total; }
+	bool is_finish() const {
+		return loop >= total;
+	}
 
 	void save_action(const action& move) {
 		cache.back().push_back(move);
@@ -418,7 +419,7 @@ int main(int argc, const char* argv[]) {
 	player play;
 	random evil;
 
-	statistic stat(10000, 10000);
+	statistic stat(10000);
 	while (!stat.is_finish()) {
 		stat.open_episode();
 		board game;
