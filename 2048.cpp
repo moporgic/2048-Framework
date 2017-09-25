@@ -100,9 +100,9 @@ public:
 		return (*this != prev) ? score : -1;
 	}
 	int move_right() {
-		mirror();
+		reflect_horizontal();
 		int score = move_left();
-		mirror();
+		reflect_horizontal();
 		return score;
 		return score;
 	}
@@ -119,15 +119,6 @@ public:
 		return score;
 	}
 
-	/**
-	 * swap row and column
-	 * +------------------------+       +------------------------+
-	 * |     2     8   128     4|       |     2     8     2     4|
-	 * |     8    32    64   256|       |     8    32     4     2|
-	 * |     2     4    32   128| ----> |   128    64    32     8|
-	 * |     4     2     8    16|       |     4   256   128    16|
-	 * +------------------------+       +------------------------+
-	 */
 	void transpose() {
 		for (int r = 0; r < 4; r++) {
 			for (int c = r + 1; c < 4; c++) {
@@ -136,32 +127,14 @@ public:
 		}
 	}
 
-	/**
-	 * horizontal reflection
-	 * +------------------------+       +------------------------+
-	 * |     2     8   128     4|       |     4   128     8     2|
-	 * |     8    32    64   256|       |   256    64    32     8|
-	 * |     2     4    32   128| ----> |   128    32     4     2|
-	 * |     4     2     8    16|       |    16     8     2     4|
-	 * +------------------------+       +------------------------+
-	 */
-	void mirror() {
+	void reflect_horizontal() {
 		for (int r = 0; r < 4; r++) {
 			std::swap(tile[r][0], tile[r][3]);
 			std::swap(tile[r][1], tile[r][2]);
 		}
 	}
 
-	/**
-	 * vertical reflection
-	 * +------------------------+       +------------------------+
-	 * |     2     8   128     4|       |     4     2     8    16|
-	 * |     8    32    64   256|       |     2     4    32   128|
-	 * |     2     4    32   128| ----> |     8    32    64   256|
-	 * |     4     2     8    16|       |     2     8   128     4|
-	 * +------------------------+       +------------------------+
-	 */
-	void flip() {
+	void reflect_vertical() {
 		for (int c = 0; c < 4; c++) {
 			std::swap(tile[0][c], tile[3][c]);
 			std::swap(tile[1][c], tile[2][c]);
@@ -181,9 +154,9 @@ public:
 		}
 	}
 
-	void rotate_right() { transpose(); mirror(); } // clockwise
-	void rotate_left() { transpose(); flip(); } // counterclockwise
-	void reverse() { mirror(); flip(); }
+	void rotate_right() { transpose(); reflect_horizontal(); } // clockwise
+	void rotate_left() { transpose(); reflect_vertical(); } // counterclockwise
+	void reverse() { reflect_horizontal(); reflect_vertical(); }
 
 public:
     friend std::ostream& operator <<(std::ostream& out, const board& b) {
