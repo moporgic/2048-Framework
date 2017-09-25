@@ -11,11 +11,11 @@
 
 class statistic {
 public:
-	statistic(const size_t& total, const size_t& unit = 0) : total(total), unit(unit ? unit : total) {}
+	statistic(const size_t& total, const size_t& block = 0) : total(total), block(block ? block : total) {}
 
 public:
 	/**
-	 * show the statistic of last unit games
+	 * show the statistic of last 'block' games
 	 *
 	 * the format would be
 	 * 1000   avg = 273901, max = 382324, ops = 241563
@@ -26,7 +26,7 @@ public:
 	 *        8192    93.7%  (22.4%)
 	 *        16384   71.3%  (71.3%)
 	 *
-	 * where (assume that unit = 1000)
+	 * where (assume that block = 1000)
 	 *  '1000': current index (n)
 	 *  'avg = 273901': the average score of saved games is 273901
 	 *  'max = 382324': the maximum score of saved games is 382324
@@ -35,10 +35,10 @@ public:
 	 *  '22.4%': 22.4% (224 games) terminated with 8192-tiles (the largest) in saved games
 	 */
 	void show() const {
-		int unit = std::min(data.size(), this->unit);
+		int block = std::min(data.size(), this->block);
 		size_t sum = 0, max = 0, opc = 0, stat[16] = { 0 };
 		auto it = data.end();
-		for (int i = 0; i < unit; i++) {
+		for (int i = 0; i < block; i++) {
 			auto& path = *(--it);
 			board game;
 			opc += path.size();
@@ -52,14 +52,14 @@ public:
 				tile = std::max(tile, game(i));
 			stat[tile]++;
 		}
-		float avg = float(sum) / unit;
-		float coef = 100.0 / unit;
+		float avg = float(sum) / block;
+		float coef = 100.0 / block;
 		float ops = opc * 1000.0 / (data.back().tock_time() - it->tick_time());
 		std::cout << data.size() << "\t";
 		std::cout << "avg = " << int(avg) << ", ";
 		std::cout << "max = " << int(max) << ", ";
 		std::cout << "ops = " << int(ops) << std::endl;
-		for (int t = 0, c = 0; c < unit; c += stat[t++]) {
+		for (int t = 0, c = 0; c < block; c += stat[t++]) {
 			if (stat[t] == 0) continue;
 			int accu = std::accumulate(stat + t, stat + 16, 0);
 			std::cout << "\t" << ((1 << t) & -2u) << "\t" << (accu * coef) << "%";
@@ -69,10 +69,10 @@ public:
 	}
 
 	void summary() const {
-		auto unit_temp = unit;
-		const_cast<statistic&>(*this).unit = data.size();
+		auto block_temp = block;
+		const_cast<statistic&>(*this).block = data.size();
 		show();
-		const_cast<statistic&>(*this).unit = unit_temp;
+		const_cast<statistic&>(*this).block = block_temp;
 	}
 
 	bool is_finished() const {
@@ -86,7 +86,7 @@ public:
 
 	void close_episode(const bool& disp = true) {
 		data.back().tock();
-		if (disp && data.size() % unit == 0) show();
+		if (disp && data.size() % block == 0) show();
 	}
 
 	void save_action(const action& move) {
@@ -100,10 +100,10 @@ public:
 
 	friend std::ostream& operator <<(std::ostream& out, const statistic& stat) {
 		auto total = stat.total;
-		auto unit = stat.unit;
+		auto block = stat.block;
 		auto size = stat.data.size();
 		out.write(reinterpret_cast<char*>(&total), sizeof(total));
-		out.write(reinterpret_cast<char*>(&unit), sizeof(unit));
+		out.write(reinterpret_cast<char*>(&block), sizeof(block));
 		out.write(reinterpret_cast<char*>(&size), sizeof(size));
 		for (const record& rec : stat.data) out << rec;
 		return out;
@@ -111,13 +111,13 @@ public:
 
 	friend std::istream& operator >>(std::istream& in, statistic& stat) {
 		auto total = stat.total;
-		auto unit = stat.unit;
+		auto block = stat.block;
 		auto size = stat.data.size();
 		in.read(reinterpret_cast<char*>(&total), sizeof(total));
-		in.read(reinterpret_cast<char*>(&unit), sizeof(unit));
+		in.read(reinterpret_cast<char*>(&block), sizeof(block));
 		in.read(reinterpret_cast<char*>(&size), sizeof(size));
 		stat.total = total;
-		stat.unit = unit;
+		stat.block = block;
 		for (size_t i = 0; i < size; i++) {
 			stat.data.emplace_back();
 			in >> stat.data.back();
@@ -166,6 +166,6 @@ private:
 	};
 
 	size_t total;
-	size_t unit;
+	size_t block;
 	std::list<record> data;
 };

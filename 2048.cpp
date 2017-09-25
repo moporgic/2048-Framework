@@ -26,15 +26,15 @@ int main(int argc, const char* argv[]) {
 	std::copy(argv, argv + argc, std::ostream_iterator<const char*>(std::cout, " "));
 	std::cout << std::endl << std::endl;
 
-	size_t total = 1000, unit = 0;
+	size_t total = 1000, block = 0;
 	std::string load, save;
 	bool summary = false;
 	for (int i = 1; i < argc; i++) {
 		std::string para(argv[i]);
 		if (para.find("--total=") == 0) {
 			total = std::stoull(para.substr(para.find("=") + 1));
-		} else if (para.find("--unit=") == 0) {
-			unit = std::stoull(para.substr(para.find("=") + 1));
+		} else if (para.find("--block=") == 0) {
+			block = std::stoull(para.substr(para.find("=") + 1));
 		} else if (para.find("--load=") == 0) {
 			load = para.substr(para.find("=") + 1);
 		} else if (para.find("--save=") == 0) {
@@ -47,7 +47,7 @@ int main(int argc, const char* argv[]) {
 	player play;
 	random evil;
 
-	statistic stat(total, unit);
+	statistic stat(total, block);
 
 	if (load.size()) {
 		std::ifstream in;
