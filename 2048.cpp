@@ -66,8 +66,7 @@ int main(int argc, const char* argv[]) {
 		while (true) {
 			agent& who = stat.take_turns(play, evil);
 			action move = who.take_action(game);
-			int reward = move.apply(game);
-			if (reward == -1) break;
+			if (move.apply(game) == -1) break;
 			stat.save_action(move);
 			if (who.check_for_win(game)) break;
 		}

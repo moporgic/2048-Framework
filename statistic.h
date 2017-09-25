@@ -105,29 +105,18 @@ public:
 	}
 
 	friend std::ostream& operator <<(std::ostream& out, const statistic& stat) {
-		auto total = stat.total;
-		auto block = stat.block;
 		auto size = stat.data.size();
-		out.write(reinterpret_cast<char*>(&total), sizeof(total));
-		out.write(reinterpret_cast<char*>(&block), sizeof(block));
 		out.write(reinterpret_cast<char*>(&size), sizeof(size));
 		for (const record& rec : stat.data) out << rec;
 		return out;
 	}
 
 	friend std::istream& operator >>(std::istream& in, statistic& stat) {
-		auto total = stat.total;
-		auto block = stat.block;
 		auto size = stat.data.size();
-		in.read(reinterpret_cast<char*>(&total), sizeof(total));
-		in.read(reinterpret_cast<char*>(&block), sizeof(block));
 		in.read(reinterpret_cast<char*>(&size), sizeof(size));
-		stat.total = total;
-		stat.block = block;
-		for (size_t i = 0; i < size; i++) {
-			stat.data.emplace_back();
-			in >> stat.data.back();
-		}
+		stat.total = stat.block = size;
+		stat.data.resize(size);
+		for (record& rec : stat.data) in >> rec;
 		return in;
 	}
 
@@ -145,7 +134,8 @@ private:
 			auto time = rec.time;
 			out.write(reinterpret_cast<char*>(&size), sizeof(size));
 			for (const action& act : rec) {
-				out.write(reinterpret_cast<const char*>(&act), sizeof(act));
+				short opcode = int(act);
+				out.write(reinterpret_cast<const char*>(&opcode), sizeof(opcode));
 			}
 			out.write(reinterpret_cast<const char*>(time), sizeof(time[0]) * 2);
 			return out;
@@ -155,9 +145,10 @@ private:
 			auto time = rec.time;
 			in.read(reinterpret_cast<char*>(&size), sizeof(size));
 			rec.reserve(size);
-			for (auto i = 0ull; i < size; i++) {
-				rec.emplace_back();
-				in.read(reinterpret_cast<char*>(&rec.back()), sizeof(rec.back()));
+			for (size_t i = 0; i < size; i++) {
+				short opcode;
+				in.read(reinterpret_cast<char*>(&opcode), sizeof(opcode));
+				rec.emplace_back(int(opcode));
 			}
 			in.read(reinterpret_cast<char*>(time), sizeof(time[0]) * 2);
 			return in;
