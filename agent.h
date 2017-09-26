@@ -4,6 +4,7 @@
 #include <sstream>
 #include <map>
 #include <type_traits>
+#include <algorithm>
 #include "board.h"
 #include "action.h"
 
@@ -74,25 +75,25 @@ private:
 };
 
 /**
- * select an action by immediately reward
+ * select an action randomly
  */
 class player : public agent {
 public:
-	player(const std::string& args = "") : agent("name=player " + args) {}
+	player(const std::string& args = "") : agent("name=player " + args) {
+		if (property.find("seed") != property.end())
+			engine.seed(int(property["seed"]));
+	}
 
 	virtual action take_action(const board& before) {
-		int code = -1;
-		int reward = -1;
-		for (int i = 0; i < 4; i++) {
+		int opcode[] = { 0, 1, 2, 3 };
+		std::shuffle(opcode, opcode + 4, engine);
+		for (int op : opcode) {
 			board b = before;
-			int r = b.move(i);
-			if (r > reward) {
-				reward = r;
-				code = i;
-			}
+			if (b.move(op) != -1) return action::move(op);
 		}
-		return action::move(code);
+		return action();
 	}
 
 private:
+	std::default_random_engine engine;
 };
