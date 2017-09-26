@@ -47,7 +47,7 @@ public:
 				score += move.apply(game);
 			sum += score;
 			max = std::max(score, max);
-			opc += path.size();
+			opc += (path.size() - 2) / 2;
 			int tile = 0;
 			for (int i = 0; i < 16; i++)
 				tile = std::max(tile, game(i));
