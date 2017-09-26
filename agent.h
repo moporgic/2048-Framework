@@ -41,6 +41,7 @@ protected:
 };
 
 /**
+ * evil (environment agent)
  * add a new random tile on board, or do nothing if the board is full
  * 2-tile: 90%
  * 4-tile: 10%
@@ -53,21 +54,15 @@ public:
 	}
 
 	virtual action take_action(const board& after) {
-		int space[16], num = 0;
-		for (int i = 0; i < 16; i++)
-			if (after(i) == 0) {
-				space[num++] = i;
-			}
-		if (num) {
+		int space[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+		std::shuffle(space, space + 16, engine);
+		for (int pos : space) {
+			if (after(pos) != 0) continue;
 			std::uniform_int_distribution<int> popup(0, 9);
-			std::uniform_int_distribution<int> empty(0, num - 1);
-
 			int tile = popup(engine) ? 1 : 2;
-			int pos = space[empty(engine)];
 			return action::place(tile, pos);
-		} else {
-			return action();
 		}
+		return action();
 	}
 
 private:
@@ -75,6 +70,7 @@ private:
 };
 
 /**
+ * player (dummy)
  * select an action randomly
  */
 class player : public agent {

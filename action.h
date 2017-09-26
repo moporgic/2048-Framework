@@ -10,8 +10,10 @@ public:
 
 	int apply(board& b) const {
 		if ((0b11 & opcode) == (opcode)) {
+			// player action (slide up, right, down, left)
 			return b.move(opcode);
 		} else if (b(opcode & 0x0f) == 0) {
+			// environment action (place a new tile)
 			b(opcode & 0x0f) = (opcode >> 4);
 			return 0;
 		}
