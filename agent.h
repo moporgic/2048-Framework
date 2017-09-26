@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <random>
+#include <sstream>
 #include "board.h"
 #include "action.h"
 
@@ -8,8 +9,8 @@ class agent {
 public:
 	agent() {}
 	virtual ~agent() {}
-	virtual void initialize() {}
-	virtual void finalize() {}
+	virtual void open_episode() {}
+	virtual void close_episode() {}
 	virtual action take_action(const board& b) { return action(); }
 	virtual bool check_for_win(const board& b) { return false; }
 	virtual std::string name() const { return "null"; }
@@ -22,7 +23,15 @@ public:
  */
 class random : public agent {
 public:
-	random(const uint64_t& seed = 0) : engine(seed) {}
+	random(const std::string& args = "") : engine(std::random_device{}()) {
+		std::stringstream ss(args);
+		for (std::string pair; ss >> pair; ) {
+			std::string key = pair.substr(0, pair.find('='));
+			std::string value = pair.substr(pair.find('=') + 1);
+
+			if (key == "seed") engine.seed(std::stoull(value));
+		}
+	}
 
 	virtual action take_action(const board& after) {
 		int space[16], num = 0;
@@ -53,7 +62,7 @@ private:
  */
 class player : public agent {
 public:
-	player() {}
+	player(const std::string& args = "") : agent() {}
 
 	virtual action take_action(const board& before) {
 		int code = -1;

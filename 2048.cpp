@@ -27,6 +27,7 @@ int main(int argc, const char* argv[]) {
 	std::cout << std::endl << std::endl;
 
 	size_t total = 1000, block = 0;
+	std::string play_args, evil_args;
 	std::string load, save;
 	bool summary = false;
 	for (int i = 1; i < argc; i++) {
@@ -35,6 +36,10 @@ int main(int argc, const char* argv[]) {
 			total = std::stoull(para.substr(para.find("=") + 1));
 		} else if (para.find("--block=") == 0) {
 			block = std::stoull(para.substr(para.find("=") + 1));
+		} else if (para.find("--play=") == 0) {
+			play_args = para.substr(para.find("=") + 1);
+		} else if (para.find("--evil=") == 0) {
+			play_args = para.substr(para.find("=") + 1);
 		} else if (para.find("--load=") == 0) {
 			load = para.substr(para.find("=") + 1);
 		} else if (para.find("--save=") == 0) {
@@ -54,12 +59,12 @@ int main(int argc, const char* argv[]) {
 		in.close();
 	}
 
-	player play;
-	random evil;
+	player play(play_args);
+	random evil(evil_args);
 
 	while (!stat.is_finished()) {
-		play.initialize();
-		evil.initialize();
+		play.open_episode();
+		evil.open_episode();
 
 		stat.open_episode();
 		board game = stat.make_empty_board();
@@ -72,8 +77,8 @@ int main(int argc, const char* argv[]) {
 		}
 		stat.close_episode();
 
-		play.finalize();
-		evil.finalize();
+		play.close_episode();
+		evil.close_episode();
 	}
 
 	if (summary) {
