@@ -100,7 +100,7 @@ public:
 	}
 
 	agent& take_turns(agent& play, agent& evil) {
-		return (std::max(data.back().size() + 1, 2ull) % 2) ? play : evil;
+		return (std::max(data.back().size() + 1, size_t(2)) % 2) ? play : evil;
 	}
 
 	agent& last_turns(agent& play, agent& evil) {

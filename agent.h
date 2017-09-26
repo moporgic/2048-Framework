@@ -46,9 +46,9 @@ protected:
  * 2-tile: 90%
  * 4-tile: 10%
  */
-class random : public agent {
+class rndenv : public agent {
 public:
-	random(const std::string& args = "") : agent("name=random " + args) {
+	rndenv(const std::string& args = "") : agent("name=rndenv " + args) {
 		if (property.find("seed") != property.end())
 			engine.seed(int(property["seed"]));
 	}
