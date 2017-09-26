@@ -81,14 +81,14 @@ public:
 		return data.size() >= total;
 	}
 
-	void open_episode() {
+	void open_episode(const std::string& flag = "") {
 		data.emplace_back();
 		data.back().tick();
 	}
 
-	void close_episode(const bool& disp = true) {
+	void close_episode(const std::string& flag = "") {
 		data.back().tock();
-		if (disp && data.size() % block == 0) show();
+		if (data.size() % block == 0) show();
 	}
 
 	board make_empty_board() {
@@ -100,8 +100,11 @@ public:
 	}
 
 	agent& take_turns(agent& play, agent& evil) {
-		// 1:play 0:evil
 		return (std::max(data.back().size() + 1, 2ull) % 2) ? play : evil;
+	}
+
+	agent& last_turns(agent& play, agent& evil) {
+		return take_turns(evil, play);
 	}
 
 	friend std::ostream& operator <<(std::ostream& out, const statistic& stat) {

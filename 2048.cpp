@@ -39,7 +39,7 @@ int main(int argc, const char* argv[]) {
 		} else if (para.find("--play=") == 0) {
 			play_args = para.substr(para.find("=") + 1);
 		} else if (para.find("--evil=") == 0) {
-			play_args = para.substr(para.find("=") + 1);
+			evil_args = para.substr(para.find("=") + 1);
 		} else if (para.find("--load=") == 0) {
 			load = para.substr(para.find("=") + 1);
 		} else if (para.find("--save=") == 0) {
@@ -63,10 +63,10 @@ int main(int argc, const char* argv[]) {
 	random evil(evil_args);
 
 	while (!stat.is_finished()) {
-		play.open_episode();
-		evil.open_episode();
+		play.open_episode("~:" + evil.name());
+		evil.open_episode(play.name() + ":~");
 
-		stat.open_episode();
+		stat.open_episode(play.name() + ":" + evil.name());
 		board game = stat.make_empty_board();
 		while (true) {
 			agent& who = stat.take_turns(play, evil);
@@ -75,10 +75,11 @@ int main(int argc, const char* argv[]) {
 			stat.save_action(move);
 			if (who.check_for_win(game)) break;
 		}
-		stat.close_episode();
+		agent& win = stat.last_turns(play, evil);
+		stat.close_episode(win.name());
 
-		play.close_episode();
-		evil.close_episode();
+		play.close_episode(win.name());
+		evil.close_episode(win.name());
 	}
 
 	if (summary) {

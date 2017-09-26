@@ -2,18 +2,41 @@
 #include <string>
 #include <random>
 #include <sstream>
+#include <map>
+#include <type_traits>
 #include "board.h"
 #include "action.h"
 
 class agent {
 public:
-	agent() {}
+	agent(const std::string& args = "") {
+		std::stringstream ss(args);
+		for (std::string pair; ss >> pair; ) {
+			std::string key = pair.substr(0, pair.find('='));
+			std::string value = pair.substr(pair.find('=') + 1);
+			property[key] = { value };
+		}
+	}
 	virtual ~agent() {}
-	virtual void open_episode() {}
-	virtual void close_episode() {}
+	virtual void open_episode(const std::string& flag = "") {}
+	virtual void close_episode(const std::string& flag = "") {}
 	virtual action take_action(const board& b) { return action(); }
 	virtual bool check_for_win(const board& b) { return false; }
-	virtual std::string name() const { return "null"; }
+
+public:
+	virtual std::string name() const {
+		auto it = property.find("name");
+		return it != property.end() ? std::string(it->second) : "unknown";
+	}
+protected:
+	typedef std::string key;
+	struct value {
+		std::string value;
+		operator std::string() const { return value; }
+		template<typename numeric, typename = typename std::enable_if<std::is_arithmetic<numeric>::value, numeric>::type>
+		operator numeric() const { return numeric(std::stod(value)); }
+	};
+	std::map<key, value> property;
 };
 
 /**
@@ -23,14 +46,9 @@ public:
  */
 class random : public agent {
 public:
-	random(const std::string& args = "") : engine(std::random_device{}()) {
-		std::stringstream ss(args);
-		for (std::string pair; ss >> pair; ) {
-			std::string key = pair.substr(0, pair.find('='));
-			std::string value = pair.substr(pair.find('=') + 1);
-
-			if (key == "seed") engine.seed(std::stoull(value));
-		}
+	random(const std::string& args = "") : agent("name=random " + args) {
+		if (property.find("seed") != property.end())
+			engine.seed(int(property["seed"]));
 	}
 
 	virtual action take_action(const board& after) {
@@ -51,8 +69,6 @@ public:
 		}
 	}
 
-	virtual std::string name() const { return "random"; }
-
 private:
 	std::default_random_engine engine;
 };
@@ -62,7 +78,7 @@ private:
  */
 class player : public agent {
 public:
-	player(const std::string& args = "") : agent() {}
+	player(const std::string& args = "") : agent("name=player " + args) {}
 
 	virtual action take_action(const board& before) {
 		int code = -1;
@@ -77,8 +93,6 @@ public:
 		}
 		return action::move(code);
 	}
-
-	virtual std::string name() const { return "player"; }
 
 private:
 };
