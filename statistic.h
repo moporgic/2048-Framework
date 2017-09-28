@@ -48,19 +48,16 @@ public:
 			sum += score;
 			max = std::max(score, max);
 			opc += (path.size() - 2) / 2;
-			int tile = 0;
-			for (int i = 0; i < 16; i++)
-				tile = std::max(tile, game(i));
-			stat[tile]++;
+			stat[*std::max_element(&game(0), &game(0) + 16)]++;
 			duration += (path.tock_time() - path.tick_time());
 		}
-		float avg = float(sum) / blk;
 		float coef = 100.0 / blk;
-		float ops = opc * 1000.0 / duration;
+		uint64_t avg = sum / blk;
+		uint64_t ops = opc * 1000.0 / duration;
 		std::cout << data.size() << "\t";
-		std::cout << "avg = " << uint32_t(avg) << ", ";
-		std::cout << "max = " << uint32_t(max) << ", ";
-		std::cout << "ops = " << uint32_t(ops) << std::endl;
+		std::cout << "avg = " << avg << ", ";
+		std::cout << "max = " << max << ", ";
+		std::cout << "ops = " << ops << std::endl;
 		for (int t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
 			size_t accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
