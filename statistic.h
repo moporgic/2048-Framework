@@ -35,11 +35,11 @@ public:
 	 *  '22.4%': 22.4% (224 games) terminated with 8192-tiles (the largest) in saved games
 	 */
 	void show() const {
-		int block = std::min(data.size(), this->block);
+		int blk = std::min(data.size(), block);
 		size_t sum = 0, max = 0, opc = 0, stat[16] = { 0 };
 		uint64_t duration = 0;
 		auto it = data.end();
-		for (int i = 0; i < block; i++) {
+		for (int i = 0; i < blk; i++) {
 			auto& path = *(--it);
 			board game;
 			size_t score = 0;
@@ -54,16 +54,16 @@ public:
 			stat[tile]++;
 			duration += (path.tock_time() - path.tick_time());
 		}
-		float avg = float(sum) / block;
-		float coef = 100.0 / block;
+		float avg = float(sum) / blk;
+		float coef = 100.0 / blk;
 		float ops = opc * 1000.0 / duration;
 		std::cout << data.size() << "\t";
-		std::cout << "avg = " << int(avg) << ", ";
-		std::cout << "max = " << int(max) << ", ";
-		std::cout << "ops = " << int(ops) << std::endl;
-		for (int t = 0, c = 0; c < block; c += stat[t++]) {
+		std::cout << "avg = " << uint32_t(avg) << ", ";
+		std::cout << "max = " << uint32_t(max) << ", ";
+		std::cout << "ops = " << uint32_t(ops) << std::endl;
+		for (int t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
-			int accu = std::accumulate(stat + t, stat + 16, 0);
+			int accu = std::accumulate(std::begin(stat), std::end(stat), 0);
 			std::cout << "\t" << ((1 << t) & -2u) << "\t" << (accu * coef) << "%";
 			std::cout << "\t(" << (stat[t] * coef) << "%)" << std::endl;
 		}
