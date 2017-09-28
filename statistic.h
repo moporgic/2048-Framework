@@ -63,7 +63,7 @@ public:
 		std::cout << "ops = " << uint32_t(ops) << std::endl;
 		for (int t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
-			int accu = std::accumulate(std::begin(stat), std::end(stat), 0);
+			size_t accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
 			std::cout << "\t" << ((1 << t) & -2u) << "\t" << (accu * coef) << "%";
 			std::cout << "\t(" << (stat[t] * coef) << "%)" << std::endl;
 		}
