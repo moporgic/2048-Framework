@@ -60,10 +60,7 @@ public:
 			sum += score;
 			max = std::max(score, max);
 			opc += (path.size() - 2) / 2;
-			int tile = 0;
-			for (int i = 0; i < 16; i++)
-				tile = std::max(tile, game(i));
-			stat[tile]++;
+			stat[*std::max_element(&game(0), &game(0) + 16)]++;
 			duration += (path.tock_time() - path.tick_time());
 		}
 		float coef = 100.0 / blk;
