@@ -86,7 +86,6 @@ public:
 		int score = move_left();
 		reflect_horizontal();
 		return score;
-		return score;
 	}
 	int move_up() {
 		rotate_right();
