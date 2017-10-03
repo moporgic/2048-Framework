@@ -1,78 +1,44 @@
 #pragma once
 #include <iostream>
 #include <vector>
-
+#include <array>
+#include <sstream>
+#include <iterator>
+#include <string>
 
 /**
- * feature and weight table for temporal difference learning
+ * weight table of n-tuple network
  */
-class feature {
+class weight {
 public:
-	feature(const size_t& len) : length(len), weight(alloc(len)) {}
-	feature(feature&& f) : length(f.length), weight(f.weight) { f.weight = nullptr; }
-	feature(const feature& f) = delete;
-	feature& operator =(const feature& f) = delete;
-	virtual ~feature() { delete[] weight; }
+	weight() : length(0), value(nullptr) {}
+	weight(const size_t& len) : length(len), value(alloc(len)) {}
+	weight(weight&& f) : length(f.length), value(f.value) { f.value = nullptr; }
+	weight(const weight& f) = delete;
+	weight& operator =(const weight& f) = delete;
+	virtual ~weight() { delete[] value; }
 
-	float& operator[] (const size_t& i) { return weight[i]; }
-	float operator[] (const size_t& i) const { return weight[i]; }
+	float& operator[] (const size_t& i) { return value[i]; }
+	const float& operator[] (const size_t& i) const { return value[i]; }
 	size_t size() const { return length; }
 
-public: // should be implemented
-
-	/**
-	 * estimate the value of a given board
-	 */
-	virtual float estimate(const board& b) const = 0;
-	/**
-	 * update the value of a given board, and return its updated value
-	 */
-	virtual float update(const board& b, const float& u) = 0;
-	/**
-	 * get the name of this feature
-	 */
-	virtual std::string name() const = 0;
-
 public:
-
-	/**
-	 * dump the detail of weight table of a given board
-	 */
-	virtual void dump(const board& b, std::ostream& out = std::cout) const {
-		out << b << "estimate = " << estimate(b) << std::endl;
-	}
-
-	friend std::ostream& operator <<(std::ostream& out, const feature& w) {
-		std::string name = w.name();
-		int len = name.length();
-		out.write(reinterpret_cast<char*>(&len), sizeof(int));
-		out.write(name.c_str(), len);
-		float* weight = w.weight;
+	friend std::ostream& operator <<(std::ostream& out, const weight& w) {
+		float* value = w.value;
 		size_t size = w.size();
 		out.write(reinterpret_cast<char*>(&size), sizeof(size_t));
-		out.write(reinterpret_cast<char*>(weight), sizeof(float) * size);
+		out.write(reinterpret_cast<char*>(value), sizeof(float) * size);
 		return out;
 	}
 
-	friend std::istream& operator >>(std::istream& in, feature& w) {
-		std::string name;
-		int len = 0;
-		in.read(reinterpret_cast<char*>(&len), sizeof(int));
-		name.resize(len);
-		in.read(&name[0], len);
-		if (name != w.name()) {
-			std::cerr << "unexpected feature: " << name << " (" << w.name() << " is expected)" << std::endl;
-			std::exit(1);
+	friend std::istream& operator >>(std::istream& in, weight& w) {
+		float* value = w.value;
+		size_t& size = w.length;
+		if (in.read(reinterpret_cast<char*>(&size), sizeof(size_t))) {
+			if (value) delete[] value;
+			value = alloc(size);
+			in.read(reinterpret_cast<char*>(value), sizeof(float) * size);
 		}
-		float* weight = w.weight;
-		size_t size;
-		in.read(reinterpret_cast<char*>(&size), sizeof(size_t));
-		if (size != w.size()) {
-			std::cerr << "unexpected feature size " << size << "for " << w.name();
-			std::cerr << " (" << w.size() << " is expected)" << std::endl;
-			std::exit(1);
-		}
-		in.read(reinterpret_cast<char*>(weight), sizeof(float) * size);
 		if (!in) {
 			std::cerr << "unexpected end of binary" << std::endl;
 			std::exit(1);
@@ -83,7 +49,7 @@ public:
 protected:
 	static float* alloc(size_t num) {
 		static size_t total = 0;
-		static size_t limit = (1 << 30) / sizeof(float); // 1G memory
+		static size_t limit = (2 << 30) / sizeof(float); // 2G memory
 		try {
 			total += num;
 			if (total > limit) throw std::bad_alloc();
@@ -94,8 +60,64 @@ protected:
 		}
 		return nullptr;
 	}
+
 	size_t length;
-	float* weight;
+	float* value;
+};
+
+class feature : public weight {
+public:
+	feature() {}
+	feature(const size_t& len) : weight(len) {}
+	feature(feature&& f) : weight(std::move(f)) { f.value = nullptr; }
+	feature(const feature& f) = delete;
+	virtual ~feature() {}
+
+public: // should be implemented
+
+	/**
+	 * estimate the value of a given board
+	 */
+	virtual float estimate(const board& b) const { return 0; };
+	/**
+	 * update the value of a given board, and return its updated value
+	 */
+	virtual float update(const board& b, const float& u) { return 0; };
+	/**
+	 * get the name of this weight
+	 */
+	virtual std::string name() const { return ""; };
+
+public:
+	/**
+	 * dump the detail of weight table of a given board
+	 */
+	virtual void dump(const board& b, std::ostream& out = std::cout) const {
+		out << b << "estimate = " << estimate(b) << std::endl;
+	}
+
+	friend std::ostream& operator <<(std::ostream& out, const feature& f) {
+		std::string name = f.name();
+		int len = name.length();
+		out.write(reinterpret_cast<char*>(&len), sizeof(int));
+		out.write(name.c_str(), len);
+		out << (*reinterpret_cast<const weight*>(&f));
+		return out;
+	}
+
+	friend std::istream& operator >>(std::istream& in, feature& f) {
+		std::string name;
+		int len = 0;
+		in.read(reinterpret_cast<char*>(&len), sizeof(int));
+		name.resize(len);
+		in.read(&name[0], len);
+		if (name != f.name()) {
+			std::cerr << "unexpected weight: " << name << " (" << f.name() << " is expected)" << std::endl;
+			std::exit(1);
+		}
+		in >> (*reinterpret_cast<weight*>(&f));
+		return in;
+	}
 };
 
 /**
@@ -139,11 +161,13 @@ public:
 		 * we would be able to use the above method to calculate its 8 isomorphisms
 		 */
 		for (int i = 0; i < 8; i++) {
-			board idx = 0xfedcba9876543210ull;
+			board idx;
+			for (int t = 0; t < 16; t++) idx(t) = t;
 			if (i >= 4) idx.reflect_horizontal();
 			idx.rotate(i);
-			for (int t : p)
+			for (int t : p) {
 				isomorphic[i].push_back(idx(t));
+			}
 		}
 	}
 	pattern(const pattern& p) = delete;

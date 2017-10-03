@@ -7,6 +7,7 @@
 #include <algorithm>
 #include "board.h"
 #include "action.h"
+#include "weight.h"
 
 class agent {
 public:
@@ -76,20 +77,50 @@ private:
 class player : public agent {
 public:
 	player(const std::string& args = "") : agent("name=player " + args) {
+		episode.reserve(32768);
 		if (property.find("seed") != property.end())
 			engine.seed(int(property["seed"]));
+		if (property.find("load") != property.end())
+			load_weights(property["load"]);
+	}
+	~player() {
+		if (property.find("save") != property.end())
+			save_weights(property["save"]);
 	}
 
 	virtual action take_action(const board& before) {
-		int opcode[] = { 0, 1, 2, 3 };
-		std::shuffle(opcode, opcode + 4, engine);
-		for (int op : opcode) {
-			board b = before;
-			if (b.move(op) != -1) return action::move(op);
-		}
-		return action();
+		action best;
+		// TODO: select a proper action
+		// TODO: push the step into episode
+		return best;
+	}
+
+	virtual void open_episode(const std::string& flag = "") {
+		episode.clear();
+		episode.reserve(32768);
+	}
+
+	virtual void close_episode(const std::string& flag = "") {
+		// TODO: train your agent by TD(0)
+	}
+
+	virtual void load_weights(const std::string& path) {
+	}
+
+	virtual void save_weights(const std::string& path) {
 	}
 
 private:
 	std::default_random_engine engine;
+
+	std::vector<feature*> features;
+
+	struct state {
+		board before;
+		board after;
+		action move;
+		int reward;
+	};
+
+	std::vector<state> episode;
 };
