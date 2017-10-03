@@ -32,10 +32,10 @@ public:
 	}
 
 	friend std::istream& operator >>(std::istream& in, weight& w) {
-		float* value = w.value;
+		float*& value = w.value;
 		size_t& size = w.length;
 		if (in.read(reinterpret_cast<char*>(&size), sizeof(size_t))) {
-			if (value) delete[] value;
+			delete[] value;
 			value = alloc(size);
 			in.read(reinterpret_cast<char*>(value), sizeof(float) * size);
 		}
