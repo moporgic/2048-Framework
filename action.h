@@ -9,16 +9,12 @@ public:
 	operator int() const { return opcode; }
 
 public:
-	bool operator ==(const action& a) const { return a == a.opcode; }
-	bool operator < (const action& a) const { return a <  a.opcode; }
+	bool operator ==(const action& a) const { return opcode == int(a); }
+	bool operator < (const action& a) const { return opcode <  int(a); }
 	bool operator !=(const action& a) const { return !(*this == a); }
 	bool operator > (const action& a) const { return a < *this; }
 	bool operator <=(const action& a) const { return !(a < *this); }
 	bool operator >=(const action& a) const { return !(*this < a); }
-	action& operator =(const action& act) {
-		opcode = act.opcode;
-		return *this;
-	}
 
 public:
 
