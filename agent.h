@@ -76,12 +76,16 @@ private:
  */
 class player : public agent {
 public:
-	player(const std::string& args = "") : agent("name=player " + args) {
+	player(const std::string& args = "") : agent("name=player " + args), alpha(0.0025f) {
 		episode.reserve(32768);
 		if (property.find("seed") != property.end())
 			engine.seed(int(property["seed"]));
+		if (property.find("alpha") != property.end())
+			alpha = float(property["alpha"]);
+
 		if (property.find("load") != property.end())
 			load_weights(property["load"]);
+		// TODO: initialize the n-tuple network
 	}
 	~player() {
 		if (property.find("save") != property.end())
@@ -94,7 +98,7 @@ public:
 	}
 
 	virtual void close_episode(const std::string& flag = "") {
-		// TODO: train your agent by TD(0)
+		// TODO: train the n-tuple network by TD(0)
 	}
 
 	virtual action take_action(const board& before) {
@@ -127,10 +131,10 @@ public:
 			out << w;
 		out.flush();
 		out.close();
-
 	}
 
 private:
+	std::vector<weight> weights;
 
 	struct state {
 		// TODO: select the necessary components of a state
@@ -140,8 +144,9 @@ private:
 		int reward;
 	};
 
+	std::vector<state> episode;
+	float alpha;
+
 private:
 	std::default_random_engine engine;
-	std::vector<weight> weights;
-	std::vector<state> episode;
 };
