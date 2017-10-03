@@ -48,11 +48,7 @@ public:
 
 protected:
 	static float* alloc(size_t num) {
-		static size_t total = 0;
-		static size_t limit = (2 << 30) / sizeof(float); // 2G memory
 		try {
-			total += num;
-			if (total > limit) throw std::bad_alloc();
 			return new float[num]();
 		} catch (std::bad_alloc&) {
 			std::cerr << "memory limit exceeded" << std::endl;
