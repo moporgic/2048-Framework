@@ -8,6 +8,17 @@ public:
 	action(const int& op = -1) : opcode(op) {}
 	operator int() const { return opcode; }
 
+public:
+	action& operator =(const action& a) { opcode = a; return *this; }
+	bool operator ==(const action& a) const { return opcode == int(a); }
+	bool operator < (const action& a) const { return opcode <  int(a); }
+	bool operator !=(const action& a) const { return !(*this == a); }
+	bool operator > (const action& a) const { return a < *this; }
+	bool operator <=(const action& a) const { return !(a < *this); }
+	bool operator >=(const action& a) const { return !(*this < a); }
+
+public:
+
 	int apply(board& b) const {
 		if ((0b11 & opcode) == (opcode)) {
 			// player action (slide up, right, down, left)
@@ -38,5 +49,5 @@ public:
 	}
 
 private:
-	const int opcode;
+	int opcode;
 };
