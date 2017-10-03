@@ -34,8 +34,11 @@ public:
 	friend std::istream& operator >>(std::istream& in, weight& w) {
 		float*& value = w.value;
 		size_t& size = w.length;
+		if (value) {
+			std::cerr << "reading to a non-empty weight" << std::endl;
+			std::exit(1);
+		}
 		if (in.read(reinterpret_cast<char*>(&size), sizeof(size_t))) {
-			delete[] value;
 			value = alloc(size);
 			in.read(reinterpret_cast<char*>(value), sizeof(float) * size);
 		}
@@ -48,7 +51,11 @@ public:
 
 protected:
 	static float* alloc(size_t num) {
+		static size_t total = 0;
+		static size_t limit = (2 << 30) / sizeof(float); // 2G memory
 		try {
+			total += num;
+			if (total > limit) throw std::bad_alloc();
 			return new float[num]();
 		} catch (std::bad_alloc&) {
 			std::cerr << "memory limit exceeded" << std::endl;
