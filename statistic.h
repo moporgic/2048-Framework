@@ -58,9 +58,9 @@ public:
 		float coef = 100.0 / block;
 		float ops = opc * 1000.0 / duration;
 		std::cout << data.size() << "\t";
-		std::cout << "avg = " << int(avg) << ", ";
-		std::cout << "max = " << int(max) << ", ";
-		std::cout << "ops = " << int(ops) << std::endl;
+		std::cout << "avg = " << unsigned(avg) << ", ";
+		std::cout << "max = " << unsigned(max) << ", ";
+		std::cout << "ops = " << unsigned(ops) << std::endl;
 		for (int t = 0, c = 0; c < block; c += stat[t++]) {
 			if (stat[t] == 0) continue;
 			int accu = std::accumulate(stat + t, stat + 16, 0);
