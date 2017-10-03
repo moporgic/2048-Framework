@@ -9,6 +9,7 @@ public:
 	operator int() const { return opcode; }
 
 public:
+	action& operator =(const action& a) { opcode = a; return *this; }
 	bool operator ==(const action& a) const { return opcode == int(a); }
 	bool operator < (const action& a) const { return opcode <  int(a); }
 	bool operator !=(const action& a) const { return !(*this == a); }
@@ -48,5 +49,5 @@ public:
 	}
 
 private:
-	const int opcode;
+	int opcode;
 };
