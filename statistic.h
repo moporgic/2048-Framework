@@ -11,7 +11,18 @@
 
 class statistic {
 public:
-	statistic(const size_t& total, const size_t& block = 0) : total(total), block(block ? block : total) {}
+	/**
+	 * the total episodes to run
+	 * the block size of statistic
+	 * the limit of saving records
+	 *
+	 * note that total >= limit >= block
+	 */
+	statistic(const size_t& total, const size_t& block = 0, const size_t& limit = 0)
+		: total(total),
+		  block(block ? block : this->total),
+		  limit(std::max(limit, this->block)),
+		  count(0) {}
 
 public:
 	/**
@@ -35,11 +46,12 @@ public:
 	 *  '22.4%': 22.4% (224 games) terminated with 8192-tiles (the largest) in saved games
 	 */
 	void show() const {
-		int blk = std::min(data.size(), block);
+		auto& ref = const_cast<std::list<record>&>(data);
+		size_t blk = std::min(ref.size(), block);
 		size_t sum = 0, max = 0, opc = 0, stat[16] = { 0 };
 		uint64_t duration = 0;
-		auto it = data.end();
-		for (int i = 0; i < blk; i++) {
+		auto it = ref.end();
+		for (size_t i = 0; i < blk; i++) {
 			auto& path = *(--it);
 			board game;
 			size_t score = 0;
@@ -54,11 +66,11 @@ public:
 		float coef = 100.0 / blk;
 		uint64_t avg = sum / blk;
 		uint64_t ops = opc * 1000.0 / duration;
-		std::cout << data.size() << "\t";
+		std::cout << count << "\t";
 		std::cout << "avg = " << avg << ", ";
 		std::cout << "max = " << max << ", ";
 		std::cout << "ops = " << ops << std::endl;
-		for (int t = 0, c = 0; c < blk; c += stat[t++]) {
+		for (size_t t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
 			size_t accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
 			std::cout << "\t" << ((1 << t) & -2u) << "\t" << (accu * coef) << "%";
@@ -75,17 +87,26 @@ public:
 	}
 
 	bool is_finished() const {
-		return data.size() >= total;
+		return count >= total;
 	}
 
 	void open_episode(const std::string& flag = "") {
-		data.emplace_back();
-		data.back().tick();
+		if (count++ < limit) {
+			data.emplace_back();
+			last = data.end();
+			last--;
+		} else {
+			if (++last == data.end()) {
+				last = data.begin();
+			}
+			last->clear();
+		}
+		last->tick();
 	}
 
 	void close_episode(const std::string& flag = "") {
-		data.back().tock();
-		if (data.size() % block == 0) show();
+		last->tock();
+		if (count % block == 0) show();
 	}
 
 	board make_empty_board() {
@@ -93,11 +114,11 @@ public:
 	}
 
 	void save_action(const action& move) {
-		data.back().push_back(move);
+		last->push_back(move);
 	}
 
 	agent& take_turns(agent& play, agent& evil) {
-		return (std::max(data.back().size() + 1, size_t(2)) % 2) ? play : evil;
+		return (std::max(last->size()  + 1, size_t(2)) % 2) ? play : evil;
 	}
 
 	agent& last_turns(agent& play, agent& evil) {
@@ -114,9 +135,11 @@ public:
 	friend std::istream& operator >>(std::istream& in, statistic& stat) {
 		auto size = stat.data.size();
 		in.read(reinterpret_cast<char*>(&size), sizeof(size));
-		stat.total = stat.block = size;
+		stat.total = stat.block = stat.limit = stat.count = size;
 		stat.data.resize(size);
 		for (record& rec : stat.data) in >> rec;
+		stat.last = stat.data.end();
+		stat.last--;
 		return in;
 	}
 
@@ -164,5 +187,8 @@ private:
 
 	size_t total;
 	size_t block;
+	size_t limit;
+	size_t count;
 	std::list<record> data;
+	std::list<record>::iterator last;
 };
