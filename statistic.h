@@ -13,8 +13,8 @@ class statistic {
 public:
 	/**
 	 * the total episodes to run
-	 * the block size for show the statistic
-	 * the limit of saved records
+	 * the block size of statistic
+	 * the limit of saving records
 	 *
 	 * note that total >= limit >= block
 	 */
