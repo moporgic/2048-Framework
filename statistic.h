@@ -90,8 +90,7 @@ public:
 	}
 
 	void open_episode(const std::string& flag = "") {
-		if (count++ >= limit)
-			data.pop_front();
+		if (count++ >= limit) data.pop_front();
 		data.emplace_back();
 		data.back().tick();
 	}
