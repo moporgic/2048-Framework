@@ -46,11 +46,10 @@ public:
 	 *  '22.4%': 22.4% (224 games) terminated with 8192-tiles (the largest) in saved games
 	 */
 	void show() const {
-		auto& ref = const_cast<std::list<record>&>(data);
-		size_t blk = std::min(ref.size(), block);
+		size_t blk = std::min(data.size(), block);
 		size_t sum = 0, max = 0, opc = 0, stat[16] = { 0 };
 		uint64_t duration = 0;
-		auto it = ref.end();
+		auto it = last; ++it;
 		for (size_t i = 0; i < blk; i++) {
 			auto& path = *(--it);
 			board game;
