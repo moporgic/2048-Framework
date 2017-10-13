@@ -49,7 +49,7 @@ public:
 		size_t blk = std::min(data.size(), block);
 		size_t sum = 0, max = 0, opc = 0, stat[16] = { 0 };
 		uint64_t duration = 0;
-		auto it = last; ++it;
+		auto it = data.end();
 		for (size_t i = 0; i < blk; i++) {
 			auto& path = *(--it);
 			board game;
@@ -90,21 +90,14 @@ public:
 	}
 
 	void open_episode(const std::string& flag = "") {
-		if (count++ < limit) {
-			data.emplace_back();
-			last = data.end();
-			last--;
-		} else {
-			if (++last == data.end()) {
-				last = data.begin();
-			}
-			last->clear();
-		}
-		last->tick();
+		if (count++ >= limit)
+			data.pop_front();
+		data.emplace_back();
+		data.back().tick();
 	}
 
 	void close_episode(const std::string& flag = "") {
-		last->tock();
+		data.back().tock();
 		if (count % block == 0) show();
 	}
 
@@ -113,11 +106,11 @@ public:
 	}
 
 	void save_action(const action& move) {
-		last->push_back(move);
+		data.back().push_back(move);
 	}
 
 	agent& take_turns(agent& play, agent& evil) {
-		return (std::max(last->size()  + 1, size_t(2)) % 2) ? play : evil;
+		return (std::max(data.back().size()  + 1, size_t(2)) % 2) ? play : evil;
 	}
 
 	agent& last_turns(agent& play, agent& evil) {
@@ -137,8 +130,6 @@ public:
 		stat.total = stat.block = stat.limit = stat.count = size;
 		stat.data.resize(size);
 		for (record& rec : stat.data) in >> rec;
-		stat.last = stat.data.end();
-		stat.last--;
 		return in;
 	}
 
@@ -189,5 +180,4 @@ private:
 	size_t limit;
 	size_t count;
 	std::list<record> data;
-	std::list<record>::iterator last;
 };
