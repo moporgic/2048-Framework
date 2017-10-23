@@ -13,7 +13,7 @@ public:
 		answer(size_t occur, value_t value) : occur(occur), value(value) {}
 	    friend std::ostream& operator <<(std::ostream& out, const answer& a) {
 	    	out << a.occur;
-	    	return a.occur ? out << " " << a.value : out;
+	    	return a.occur ? out << " " << std::to_string(a.value) : out;
 		}
 	public:
 		const size_t occur;
