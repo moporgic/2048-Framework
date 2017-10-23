@@ -1,4 +1,6 @@
 #pragma once
+#include <iostream>
+#include <iomanip>
 #include <string>
 #include <cmath>
 #include "board2x3.h"
@@ -13,7 +15,7 @@ public:
 	public:
 		answer(value_t value) : value(value) {}
 	    friend std::ostream& operator <<(std::ostream& out, const answer& a) {
-	    	return out << (std::isnan(a.value) ? "-1" : std::to_string(a.value));
+	    	return out << std::setprecision(20) << (std::isnan(a.value) ? -1 : a.value);
 		}
 	public:
 		const value_t value;

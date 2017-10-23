@@ -40,7 +40,7 @@ int main(int argc, const char* argv[]) {
 	board2x3 test;
 	while (std::cin >> type >> test) {
 		auto ans = solve.solve2x3(type, test);
-		std::cout << ans << std::endl;
+		std::cout << "= " << ans << std::endl;
 	}
 
 	return 0;
