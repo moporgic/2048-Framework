@@ -105,9 +105,7 @@ public:
 	}
 
 	void reflect_vertical() {
-		std::swap(tile[0][0], tile[1][0]);
-		std::swap(tile[0][1], tile[1][1]);
-		std::swap(tile[0][2], tile[1][2]);
+		std::swap(tile[0], tile[1]);
 	}
 
 	void reverse() { reflect_horizontal(); reflect_vertical(); }
@@ -126,19 +124,21 @@ public:
 		out << "+------------------+" << std::endl;
 		return out;
 	}
-    friend std::istream& operator >>(std::istream& in, board2x3& b) {
+    friend std::istream& operator >>(std::istream& in, board2x3& b, bool norm = false) {
     	std::string s;
 		if (in >> s) {
 			if (s.find('+') != std::string::npos) {
 				in >> s;
 		    	in >> b(0) >> b(1) >> b(2) >> s >> s;
 		    	in >> b(3) >> b(4) >> b(5) >> s >> s;
-		    	for (int i = 0; i < 6; i++)
-		    		if (b(i) != 0)
-		    			b(i) = std::log2(b(i));
+		    	norm = true;
 			} else {
 				b(0) = std::stol(s);
 		    	in >> b(1) >> b(2) >> b(3) >> b(4) >> b(5);
+			}
+			if (norm) {
+		    	for (int i = 0; i < 6; i++)
+		    		if (b(i) != 0) b(i) = std::log2(b(i));
 			}
 		}
     	return in;
