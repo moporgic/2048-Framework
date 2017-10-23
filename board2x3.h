@@ -129,10 +129,14 @@ public:
 		if (in >> s) {
 			bool norm = false;
 			if (s.find('+') != std::string::npos) {
-				in >> s;
-		    	in >> b(0) >> b(1) >> b(2) >> s >> s;
-		    	in >> b(3) >> b(4) >> b(5) >> s >> s;
 		    	norm = true;
+				if (in >> s && s == "|") {
+			    	in >> b(0) >> b(1) >> b(2) >> s >> s;
+			    	in >> b(3) >> b(4) >> b(5) >> s >> s;
+				} else {
+					b(0) = std::stol(s);
+			    	in >> b(1) >> b(2) >> b(3) >> b(4) >> b(5);
+				}
 			} else {
 				b(0) = std::stol(s);
 		    	in >> b(1) >> b(2) >> b(3) >> b(4) >> b(5);
