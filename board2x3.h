@@ -128,17 +128,18 @@ public:
 	}
     friend std::istream& operator >>(std::istream& in, board2x3& b) {
     	std::string s;
-		in >> s;
-		if (s.find('+') != std::string::npos) {
-			in >> s;
-	    	in >> b(0) >> b(1) >> b(2) >> s >> s;
-	    	in >> b(3) >> b(4) >> b(5) >> s >> s;
-	    	for (int i = 0; i < 6; i++)
-	    		if (b(i) != 0)
-	    			b(i) = std::log2(b(i));
-		} else {
-			b(0) = std::stol(s);
-	    	in >> b(1) >> b(2) >> b(3) >> b(4) >> b(5);
+		if (in >> s) {
+			if (s.find('+') != std::string::npos) {
+				in >> s;
+		    	in >> b(0) >> b(1) >> b(2) >> s >> s;
+		    	in >> b(3) >> b(4) >> b(5) >> s >> s;
+		    	for (int i = 0; i < 6; i++)
+		    		if (b(i) != 0)
+		    			b(i) = std::log2(b(i));
+			} else {
+				b(0) = std::stol(s);
+		    	in >> b(1) >> b(2) >> b(3) >> b(4) >> b(5);
+			}
 		}
     	return in;
     }

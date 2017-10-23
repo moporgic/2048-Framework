@@ -17,8 +17,7 @@ public:
 
 	friend std::istream& operator >>(std::istream& in, state_type& type) {
 		std::string s;
-		in >> s;
-		type.t = static_cast<state_type::type>((s + " ").front());
+		if (in >> s) type.t = static_cast<state_type::type>((s + " ").front());
 		return in;
 	}
 
