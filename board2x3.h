@@ -124,9 +124,10 @@ public:
 		out << "+------------------+" << std::endl;
 		return out;
 	}
-    friend std::istream& operator >>(std::istream& in, board2x3& b, bool norm = false) {
+    friend std::istream& operator >>(std::istream& in, board2x3& b) {
     	std::string s;
 		if (in >> s) {
+			bool norm = false;
 			if (s.find('+') != std::string::npos) {
 				in >> s;
 		    	in >> b(0) >> b(1) >> b(2) >> s >> s;
