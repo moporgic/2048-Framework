@@ -13,8 +13,8 @@ public:
 	class answer {
 	public:
 		answer(value_t value) : value(value) {}
-	    friend std::ostream& operator <<(std::ostream& out, const answer& a) {
-	    	return out << (std::isnan(a.value) ? -1 : a.value);
+	    friend std::ostream& operator <<(std::ostream& out, const answer& ans) {
+	    	return out << (std::isnan(ans.value) ? -1 : ans.value);
 		}
 	public:
 		const value_t value;
@@ -27,7 +27,7 @@ public:
 		std::cout << "solver is initialized." << std::endl << std::endl;
 	}
 
-	answer solve2x3(state_type type, const board2x3& b) {
+	answer solve2x3(state_type type, const board2x3& state) {
 		// TODO: find the answer in the lookup table and return it
 		return -1;
 	}
