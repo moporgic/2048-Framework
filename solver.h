@@ -27,7 +27,7 @@ public:
 		std::cout << "solver is initialized." << std::endl << std::endl;
 	}
 
-	answer solve2x3(state_type type, const board2x3& state) {
+	answer solve2x3(const board2x3& state, state_type type = state_type::before) {
 		// TODO: find the answer in the lookup table and return it
 		return -1;
 	}

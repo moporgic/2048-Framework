@@ -44,7 +44,7 @@ int main(int argc, const char* argv[]) {
 	board2x3 test;
 	std::cout << std::setprecision(precision);
 	while (std::cin >> type >> test) {
-		auto ans = solve.solve2x3(type, test);
+		auto ans = solve.solve2x3(test, type);
 		std::cout << "= " << ans << std::endl;
 	}
 
