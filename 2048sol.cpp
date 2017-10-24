@@ -7,6 +7,7 @@
  */
 
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
 #include <functional>
 #include <iterator>
@@ -28,16 +29,20 @@ int main(int argc, const char* argv[]) {
 	std::cout << std::endl << std::endl;
 
 	std::string solve_args;
+	int precision = 10;
 	for (int i = 1; i < argc; i++) {
 		std::string para(argv[i]);
 		if (para.find("--solve=") == 0) {
 			solve_args = para.substr(para.find("=") + 1);
+		} else if (para.find("--precision=") == 0) {
+			precision = std::stol(para.substr(para.find("=") + 1));
 		}
 	}
 
 	solver solve(solve_args);
 	state_type type;
 	board2x3 test;
+	std::cout << std::setprecision(precision);
 	while (std::cin >> type >> test) {
 		auto ans = solve.solve2x3(type, test);
 		std::cout << "= " << ans << std::endl;
