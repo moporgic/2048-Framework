@@ -1,6 +1,6 @@
 /**
  * Basic Environment for Game 2048
- * use 'g++ -std=c++0x -O3 -g -o 2048 2048.cpp' to compile the source
+ * use 'g++ -std=c++0x -O3 -g -Wall -fmessage-length=0 -o 2048sol 2048sol.cpp' to compile the source
  *
  * Computer Games and Intelligence (CGI) Lab, NCTU, Taiwan
  * http://www.aigames.nctu.edu.tw
