@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iterator>
 #include <string>
+#include <cstdint>
 
 /**
  * weight table of n-tuple network
@@ -24,36 +25,47 @@ public:
 
 public:
 	friend std::ostream& operator <<(std::ostream& out, const weight& w) {
+		uint64_t size = w.length;
 		float* value = w.value;
-		size_t size = w.size();
-		out.write(reinterpret_cast<char*>(&size), sizeof(size_t));
+		out.write(reinterpret_cast<char*>(&size), sizeof(uint64_t));
 		out.write(reinterpret_cast<char*>(value), sizeof(float) * size);
+		if (!out) {
+			std::cerr << "weight may not have been stored successfully" << std::endl;
+		}
 		return out;
 	}
 
 	friend std::istream& operator >>(std::istream& in, weight& w) {
-		float*& value = w.value;
-		size_t& size = w.length;
-		if (value) {
-			std::cerr << "reading to a non-empty weight" << std::endl;
-			std::exit(1);
-		}
-		if (in.read(reinterpret_cast<char*>(&size), sizeof(size_t))) {
-			value = alloc(size);
+		uint64_t size = w.length;
+		float* value = w.value;
+		if (in.read(reinterpret_cast<char*>(&size), sizeof(uint64_t))) {
+			if (value) {
+				std::cerr << "reading to a non-empty weight" << std::endl;
+				allocated_memory() -= w.length;
+				delete[] w.value;
+			}
+			w.length = size;
+			w.value = value = alloc(size);
 			in.read(reinterpret_cast<char*>(value), sizeof(float) * size);
 		}
 		if (!in) {
-			std::cerr << "unexpected end of binary" << std::endl;
+			std::cerr << "unexpected end of weight" << std::endl;
 			std::exit(1);
 		}
 		return in;
 	}
 
 protected:
-	static float* alloc(size_t num) {
+
+	static size_t& allocated_memory() {
 		static size_t total = 0;
-		static size_t limit = (2 << 30) / sizeof(float); // 2G memory
+		return total;
+	}
+
+	static float* alloc(size_t num) {
 		try {
+			size_t& total = allocated_memory();
+			const size_t limit = (2 << 30) / sizeof(float); // 2G memory, feel free to remove the limitation
 			total += num;
 			if (total > limit) throw std::bad_alloc();
 			return new float[num]();
