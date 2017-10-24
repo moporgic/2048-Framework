@@ -40,11 +40,11 @@ int main(int argc, const char* argv[]) {
 	}
 
 	solver solve(solve_args);
+	board2x3 state;
 	state_type type;
-	board2x3 test;
 	std::cout << std::setprecision(precision);
-	while (std::cin >> type >> test) {
-		auto ans = solve.solve2x3(test, type);
+	while (std::cin >> type >> state) {
+		auto ans = solve.solve2x3(state, type);
 		std::cout << "= " << ans << std::endl;
 	}
 
