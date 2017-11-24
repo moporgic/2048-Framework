@@ -21,6 +21,31 @@
 #include "agent.h"
 #include "statistic.h"
 
+int shell(int argc, const char* argv[]) {
+	std::string line;
+	while (std::getline(std::cin, line)) {
+		std::stringstream tokenizer(line);
+		std::string token;
+		tokenizer >> token;
+
+		// match $id "player":"environment" request
+		// match $id "who" move request
+		// match $id "who" move $action
+		// match $id "who" win
+		// match $id sequence ...
+		// match $id status
+		// set debug [on/off]
+		// set statistic [on/off]
+		// set agent "name" as player/environment "name" [on/off] [with "arguments"]
+
+		// match $id accept
+		// match $id reject
+		// match $id "name" move $action
+		// match $id "name" win
+	}
+	return 0;
+}
+
 int main(int argc, const char* argv[]) {
 	std::cout << "2048-Demo: ";
 	std::copy(argv, argv + argc, std::ostream_iterator<const char*>(std::cout, " "));
@@ -48,6 +73,8 @@ int main(int argc, const char* argv[]) {
 			save = para.substr(para.find("=") + 1);
 		} else if (para.find("--summary") == 0) {
 			summary = true;
+		} else if (para.find("--shell") == 0) {
+			return shell(argc, argv);
 		}
 	}
 
