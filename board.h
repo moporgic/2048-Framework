@@ -141,7 +141,7 @@ public:
 
 public:
     friend std::ostream& operator <<(std::ostream& out, const board& b) {
-		char buff[32];
+		char buff[64];
 		out << "+------------------------+" << std::endl;
 		for (int r = 0; r < 4; r++) {
 			std::snprintf(buff, sizeof(buff), "|%6u%6u%6u%6u|",
