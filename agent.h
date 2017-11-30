@@ -28,6 +28,7 @@ public:
 public:
 	virtual std::string name() const { return property["name"]; }
 	virtual std::string role() const { return property["role"]; }
+	virtual void notify(const std::string& msg) { property[msg.substr(0, msg.find('='))] = msg.substr(msg.find('=') + 1); }
 
 protected:
 	typedef std::string key;
