@@ -17,9 +17,9 @@
 #include <cmath>
 #include <chrono>
 #include <vector>
-#include <queue>
 #include <map>
 #include <regex>
+#include <memory>
 #include "board.h"
 #include "action.h"
 #include "agent.h"
@@ -29,107 +29,45 @@ int shell(int argc, const char* argv[]) {
 
 	struct match {
 		std::string id;
-		agent* actor;
-		board state;
-		std::queue<int> drop;
-		statistic stat;
-
-		match(const std::string& id, agent* actor, const std::string& info) : id(id), actor(actor) {
-			stat.open_episode(info);
-		}
 	};
+	// match $id $role new
+	// match $id $role move request
+	// match $id $role move $action
+	// match $id $role win
 
-	std::vector<agent*> lounge;
-	std::map<std::string, match> arena;
+	// match $id $role move $action
+
+	std::regex match_open  ("^match \\S+ (play|evil) open \\S+:\\S+$");
+	std::regex match_take  ("^match \\S+ (play|evil) take turn$");
+	std::regex match_move  ("^match \\S+ (play|evil) move \\d+$");
+	std::regex match_close ("^match \\S+ (play|evil) close \\S+$");
+
+	std::map<std::string, std::shared_ptr<agent>> lounge;
+	std::map<std::string, std::shared_ptr<match>> arena;
 
 	std::string command;
 	while (std::getline(std::cin, command)) {
-		std::stringstream tokenizer(command);
-		std::vector<std::string> tokens;
-		for (std::string token; tokenizer >> token; tokens.push_back(token));
 
-		try {
-			if (tokens.at(0) == "match") {
-				auto id = tokens.at(1);
-				if (tokens.at(2) != "set") {
-					auto role = tokens.at(2);
-					auto oper = tokens.at(3);
-					if (oper == "move") {
-						auto code = tokens.at(4);
-						if (code == "request") {
-							if (arena.at(id).actor->role() == role) {
-								// TODO: I need to output an action
-							}
-						} else {
-							action a(std::stol(code));
-							int reward = a.apply(arena.at(id).state);
-							// TODO: check reward
-							arena.at(id).stat.save_action(a);
-						}
-					} else if (oper == "new") {
-						if (arena.find(id) == arena.end()) {
-							auto info = tokens.at(4);
-							if (tokens.at(5) == "request") {
-								auto name = (role == "player") ?
-									info.substr(0, info.find(':')) :
-									info.substr(info.find(':') + 1);
-								auto actor = std::find_if(lounge.begin(), lounge.end(), [=](agent* a) {
-									return a->role() == role && a->name() == name;
-								});
-								if (actor == lounge.end()) {
-									actor = std::find_if(lounge.begin(), lounge.end(), [=](agent* a) {
-										return a->role() == role;
-									});
-								}
-								if (actor) {
-									arena.emplace();
-									match m(id, actor, info);
-								}
-							}
-						}
-					} else if (oper == "win") {
+		if (std::regex_match(command, match_take)) {
+			std::string id, role, buf;
+			std::stringstream(command) >> buf >> id >> role;
 
-					}
-				} else if (tokens.at(2) == "set") {
-					auto opt = tokens.at(3);
-					if (opt == "sequence") {
-						match& m = arena.at(id);
-						for (size_t i = 4; i < tokens.size(); i++)
-							m.drop.push(std::stol(tokens.at(i)));
-					} else if (opt == "timeout") {
+		} else if (std::regex_match(command, match_move)) {
+			std::string id, role, buf; int code;
+			std::stringstream(command) >> buf >> id >> role >> buf >> code;
 
-					}
-				}
-			}
-		} catch (std::out_of_range&) {
+		} else if (std::regex_match(command, match_open)) {
+			std::string id, role, info, buf;
+			std::stringstream(command) >> buf >> id >> role >> buf >> info;
 
-		} catch (int&) {
+			std::string play = info.substr(0, info.find(':'));
+			std::string evil = info.substr(info.find(':') + 1);
 
+		} else if (std::regex_match(command, match_close)) {
+			std::string id, role, buf;
+			std::stringstream(command) >> buf >> id >> role;
 		}
 
-		std::regex match_new_request  ("^match (\\S+) (player/environment) new ([^ :]+):(\\S+) request$");
-		std::regex match_move_request ("^match (\\S+) (player/environment) move request$");
-		std::regex match_move_action  ("^match (\\S+) (player/environment) move (\\S+)$");
-		std::regex match_win          ("^match (\\S+) (player/environment) win$");
-		std::regex match_set_sequence ("^match (\\S+) set sequence( \\d)+$");
-
-		// match $id $role new $name:$name request
-		// match $id $role move request
-		// match $id $role move $action
-		// match $id $role win
-		// match $id set sequence $sequence
-		// match $id set timeout $time
-		// set debug [on/off]
-		// set statistic [on/off]
-		// set $role $name [on/off] [with $arguments]
-		// set timeout $time
-		// set label $label
-		// status
-
-		// match $id accept
-		// match $id reject
-		// match $id $role move $action
-		// match $id $role win
 	}
 
 	return 0;
