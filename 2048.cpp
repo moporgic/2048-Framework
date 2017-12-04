@@ -29,6 +29,15 @@ int shell(int argc, const char* argv[]) {
 
 	struct match {
 		std::string id;
+		std::shared_ptr<agent> play;
+		std::shared_ptr<agent> evil;
+		board b;
+		std::shared_ptr<statistic> stat;
+		match(const std::string& id, const std::string& info) : id(id) {
+			play = new agent("name=" + info.substr(0, info.find(':')) + " role=dummy");
+			evil = new agent("name=" + info.substr(info.find(':') + 1) + " role=dummy");
+			stat = new statistic(1);
+		}
 	};
 	// match $id $role new
 	// match $id $role move request
@@ -52,20 +61,67 @@ int shell(int argc, const char* argv[]) {
 			std::string id, role, buf;
 			std::stringstream(command) >> buf >> id >> role;
 
+			match& m = *arena.at(id);
+			agent& who = *((role == "player") ? m.play : m.evil);
+			if (who.role() != "dummy") {
+				action a = who.take_action(m.b);
+				std::cout << "match " << id << " " << role << " move " << int(a) << std::endl;
+			}
+
 		} else if (std::regex_match(command, match_move)) {
 			std::string id, role, buf; int code;
 			std::stringstream(command) >> buf >> id >> role >> buf >> code;
+
+			match& m = *arena.at(id);
+			statistic& stat = *m.stat;
+			int r = action(code).apply(m.b);
+			if (r != -1) {
+				stat.save_action(code);
+			}
 
 		} else if (std::regex_match(command, match_open)) {
 			std::string id, role, info, buf;
 			std::stringstream(command) >> buf >> id >> role >> buf >> info;
 
-			std::string play = info.substr(0, info.find(':'));
-			std::string evil = info.substr(info.find(':') + 1);
+			if (arena.find(id) == arena.end()) {
+				arena[id] = new match(id, info);
+				match& m = *arena.at(id);
+				m.stat->open_episode(info);
+				m.b = m.stat->make_empty_board();
+			}
+			match& m = *arena.at(id);
+			auto& who = role == "player" ? m.play : m.evil;
+			auto it = std::find_if(lounge.begin(), lounge.end(), [=](std::shared_ptr<agent> p) {
+				return p->name() == who->name() && p->role() == who->role();
+			});
+			if (it != lounge.end()) {
+				who = *it;
+				who->open_episode(role == "player" ? "~:" + m.evil->name() : m.play->name() + ":~");
+			} else {
+				arena.erase(id);
+			}
 
 		} else if (std::regex_match(command, match_close)) {
 			std::string id, role, buf;
 			std::stringstream(command) >> buf >> id >> role;
+
+			match& m = *arena.at(id);
+			auto& win = *(role == "player" ? m.play : m.evil);
+			auto& stat = *m.stat;
+			stat.close_episode(win.name());
+			m.play->close_episode(win.name());
+			m.evil->close_episode(win.name());
+
+			std::string save = id + ".stat";
+			std::ofstream out;
+			out.open(save.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+			if (out.is_open()) {
+				out << stat;
+				out.close();
+			}
+
+			arena.erase(id);
+
 		}
 
 	}
