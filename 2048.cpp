@@ -129,6 +129,7 @@ int shell(int argc, const char* argv[]) {
 					oss << "match " << id << " " << role << " ready" << std::endl;
 					std::string out = oss.str();
 					std::cout << out << std::endl;
+					dout << ">> " << out << std::endl;
 					return who;
 				};
 
