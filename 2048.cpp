@@ -36,36 +36,42 @@ int shell(int argc, const char* argv[]) {
 		match(const std::string& id, const std::string& info) : id(id) {
 			play = std::shared_ptr<agent>(new agent("name=" + info.substr(0, info.find(':')) + " role=dummy"));
 			evil = std::shared_ptr<agent>(new agent("name=" + info.substr(info.find(':') + 1) + " role=dummy"));
-			stat = std::shared_ptr<statistic>(new statistic(1));
+			stat = std::shared_ptr<statistic>(new statistic(1, -1));
 		}
 	};
 
 	std::map<std::string, std::shared_ptr<agent>> lounge;
 	std::map<std::string, std::shared_ptr<match>> arena;
 	bool save_statistics = false;
+	bool debug_mode = false;
 
 	for (int i = 1; i < argc; i++) {
 		std::string para(argv[i]);
 		if (para.find("--play") == 0) {
-			std::string args = para.find("--play") == 0 ? para.substr(para.find("=") + 1) : "";
+			std::string args = para.find("--play=") == 0 ? para.substr(para.find("=") + 1) : "";
 			std::shared_ptr<agent> who(new player(args));
 			lounge[who->name()] = who;
-		} else if (para.find("--evil=") == 0) {
-			std::string args = para.find("--evil") == 0 ? para.substr(para.find("=") + 1) : "";
+		} else if (para.find("--evil") == 0) {
+			std::string args = para.find("--evil=") == 0 ? para.substr(para.find("=") + 1) : "";
 			std::shared_ptr<agent> who(new rndenv(args));
 			lounge[who->name()] = who;
 		} else if (para.find("--save") == 0) {
 			save_statistics = true;
+		} else if (para.find("--debug") == 0) {
+			debug_mode = true;
 		}
 	}
 
+	std::ostream& dout = debug_mode ? std::cerr : *(new std::ofstream);
+
 	std::regex match_open  ("^match \\S+ (play|evil) open \\S+:\\S+$");
 	std::regex match_take  ("^match \\S+ (play|evil) take turn$");
-	std::regex match_move  ("^match \\S+ (play|evil) move \\d+$");
+	std::regex match_move  ("^match \\S+ (play|evil) move \\S+$");
 	std::regex match_close ("^match \\S+ (play|evil) close \\S+$");
 
 	std::string command;
 	while (std::getline(std::cin, command)) {
+		dout << "<< " << command;
 		try {
 			if (std::regex_match(command, match_take)) {
 				std::string id, role, buf;
@@ -73,19 +79,25 @@ int shell(int argc, const char* argv[]) {
 
 				if (arena.find(id) == arena.end()) continue;
 				match& m = *arena.at(id);
-				agent& who = *((role == "player") ? m.play : m.evil);
+				agent& who = *(role == "play" ? m.play : m.evil);
 				if (who.role() == "dummy") continue;
 				action a = who.take_action(m.b);
-				std::cout << "match " << id << " " << role << " move " << int(a) << std::endl;
+
+				std::stringstream oss;
+				oss << "match " << id << " " << role << " move " << std::hex << int(a);
+				std::string out = oss.str();
+				std::cout << out << std::endl;
+				dout << ">> " << out << std::endl;
 
 			} else if (std::regex_match(command, match_move)) {
 				std::string id, role, buf; int code;
-				std::stringstream(command) >> buf >> id >> role >> buf >> code;
+				std::stringstream(command) >> buf >> id >> role >> buf >> std::hex >> code;
 
 				if (arena.find(id) == arena.end()) continue;
 				match& m = *arena.at(id);
 				statistic& stat = *m.stat;
 				int r = action(code).apply(m.b);
+				dout << m.b << "reward = " << r << std::endl;
 				if (r != -1) {
 					stat.save_action(code);
 				}
@@ -95,6 +107,7 @@ int shell(int argc, const char* argv[]) {
 				std::stringstream(command) >> buf >> id >> role >> buf >> info;
 
 				if (arena.find(id) == arena.end()) {
+					dout << "match already exists - single client mode" << std::endl;
 					arena[id] = std::shared_ptr<match>(new match(id, info));
 					match& m = *arena.at(id);
 					statistic& stat = *m.stat;
@@ -102,15 +115,22 @@ int shell(int argc, const char* argv[]) {
 					m.b = stat.make_empty_board();
 				}
 				match& m = *arena.at(id);
-				std::shared_ptr<agent>& who = role == "player" ? m.play : m.evil;
+				std::shared_ptr<agent>& who = role == "play" ? m.play : m.evil;
+
 				auto it = std::find_if(lounge.begin(), lounge.end(), [=](std::pair<std::string, std::shared_ptr<agent>> p) {
-					return p.second->name() == who->name() && p.second->role() == who->role();
+					return p.second->name() == who->name() && p.second->role().substr(0, 1) == role.substr(0, 1);
 				});
 				if (it != lounge.end()) {
 					who = it->second;
-					who->open_episode(role == "player" ? "~:" + m.evil->name() : m.play->name() + ":~");
-					std::cout << "match " << id << " " << role << " ready" << std::endl;
+					who->open_episode(role == "play" ? "~:" + m.evil->name() : m.play->name() + ":~");
+
+					std::stringstream oss;
+					oss << "match " << id << " " << role << " ready" << std::endl;
+					std::string out = oss.str();
+					std::cout << out << std::endl;
+					dout << ">> " << out << std::endl;
 				} else {
+					dout << who->name() << " not found" << std::endl;
 					arena.erase(id);
 				}
 
@@ -120,7 +140,7 @@ int shell(int argc, const char* argv[]) {
 
 				if (arena.find(id) == arena.end()) continue;
 				match& m = *arena.at(id);
-				auto& win = *(role == "player" ? m.play : m.evil);
+				auto& win = *(role == "play" ? m.play : m.evil);
 				auto& stat = *m.stat;
 				stat.close_episode(win.name());
 				m.play->close_episode(win.name());
@@ -128,6 +148,7 @@ int shell(int argc, const char* argv[]) {
 
 				if (save_statistics) {
 					std::string save = id + ".stat";
+					dout << "saving statistic to " << save << "..." << std::endl;
 					std::ofstream out;
 					out.open(save.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
 					if (out.is_open()) {
