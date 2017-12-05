@@ -62,10 +62,10 @@ int shell(int argc, const char* argv[]) {
 		}
 	}
 
-	std::regex match_open  ("^match \\S+ (play|evil) open \\S+:\\S+$");
+	std::regex match_open  ("^match \\S+ open \\S+:\\S+$");
 	std::regex match_take  ("^match \\S+ (play|evil) take turn$");
 	std::regex match_move  ("^match \\S+ (play|evil) move \\S+$");
-	std::regex match_close ("^match \\S+ (play|evil) close \\S+$");
+	std::regex match_close ("^match \\S+ close \\S+$");
 
 	std::ostream& dout = debug_mode ? std::cerr : *(new std::ofstream);
 	for (std::string command; std::getline(std::cin, command); ) {
@@ -101,25 +101,28 @@ int shell(int argc, const char* argv[]) {
 				}
 
 			} else if (std::regex_match(command, match_open)) {
-				std::string id, role, info, buf;
-				std::stringstream(command) >> buf >> id >> role >> buf >> info;
+				std::string id, info, buf;
+				std::stringstream(command) >> buf >> id >> buf >> info;
 
-				if (arena.find(id) == arena.end()) {
-					arena[id] = std::shared_ptr<match>(new match(id, info));
-					match& m = *arena.at(id);
-					statistic& stat = *m.stat;
-					stat.open_episode(info);
-					m.b = stat.make_empty_board();
-				} else {
-					dout << "match already exists" << std::endl;
+				if (arena.find(id) != arena.end()) {
+					dout << id << " is running now" << std::endl;
+					continue;
 				}
-				match& m = *arena.at(id);
-				std::shared_ptr<agent>& who = role == "play" ? m.play : m.evil;
 
-				auto it = std::find_if(lounge.begin(), lounge.end(), [=](std::pair<std::string, std::shared_ptr<agent>> p) {
-					return p.second->name() == who->name() && p.second->role().substr(0, 1) == role.substr(0, 1);
-				});
-				if (it != lounge.end()) {
+				arena[id] = std::shared_ptr<match>(new match(id, info));
+				match& m = *arena.at(id);
+				statistic& stat = *m.stat;
+				stat.open_episode(info);
+				m.b = stat.make_empty_board();
+
+				auto open_episode_for = [&](std::string name) -> std::shared_ptr<agent> {
+					auto it = std::find_if(lounge.begin(), lounge.end(),
+							[=](std::pair<std::string, std::shared_ptr<agent>> p) {
+						return p.second->name() == name;
+					});
+					if (it == lounge.end()) return {};
+					std::string role = it->second->role().find("play") == 0 ? "play" : "evil";
+					std::shared_ptr<agent>& who = role == "play" ? m.play : m.evil;
 					who = it->second;
 					who->open_episode(role == "play" ? "~:" + m.evil->name() : m.play->name() + ":~");
 
@@ -127,23 +130,26 @@ int shell(int argc, const char* argv[]) {
 					oss << "match " << id << " " << role << " ready" << std::endl;
 					std::string out = oss.str();
 					std::cout << out << std::endl;
-					dout << ">> " << out << std::endl;
-				} else {
-					dout << who->name() << " not found" << std::endl;
+					return who;
+				};
+
+				bool as_play = open_episode_for(m.play->name()) != nullptr;
+				bool as_evil = open_episode_for(m.evil->name()) != nullptr;
+				if (!(as_play || as_evil)) {
+					dout << info << " not found" << std::endl;
 					arena.erase(id);
 				}
 
 			} else if (std::regex_match(command, match_close)) {
-				std::string id, role, buf;
-				std::stringstream(command) >> buf >> id >> role;
+				std::string id, win, buf;
+				std::stringstream(command) >> buf >> id >> buf >> win;
 
 				if (arena.find(id) == arena.end()) continue;
 				match& m = *arena.at(id);
-				auto& win = *(role == "play" ? m.play : m.evil);
-				auto& stat = *m.stat;
-				stat.close_episode(win.name());
-				m.play->close_episode(win.name());
-				m.evil->close_episode(win.name());
+				statistic& stat = *m.stat;
+				stat.close_episode(win);
+				m.play->close_episode(win);
+				m.evil->close_episode(win);
 
 				if (save_statistics) {
 					std::string save = id + ".stat";
