@@ -16,7 +16,6 @@
 #include <fstream>
 #include <cmath>
 #include <chrono>
-#include <vector>
 #include <map>
 #include <regex>
 #include <memory>
