@@ -69,7 +69,7 @@ int shell(int argc, const char* argv[]) {
 
 	std::ostream& dout = debug_mode ? std::cerr : *(new std::ofstream);
 	for (std::string command; std::getline(std::cin, command); ) {
-		dout << "<< " << command;
+		dout << "<< " << command << std::endl;
 		try {
 			if (std::regex_match(command, match_take)) {
 				std::string id, role, buf;
@@ -105,12 +105,13 @@ int shell(int argc, const char* argv[]) {
 				std::stringstream(command) >> buf >> id >> role >> buf >> info;
 
 				if (arena.find(id) == arena.end()) {
-					dout << "match already exists - single client mode" << std::endl;
 					arena[id] = std::shared_ptr<match>(new match(id, info));
 					match& m = *arena.at(id);
 					statistic& stat = *m.stat;
 					stat.open_episode(info);
 					m.b = stat.make_empty_board();
+				} else {
+					dout << "match already exists" << std::endl;
 				}
 				match& m = *arena.at(id);
 				std::shared_ptr<agent>& who = role == "play" ? m.play : m.evil;
