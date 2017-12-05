@@ -49,11 +49,11 @@ int shell(int argc, const char* argv[]) {
 		std::string para(argv[i]);
 		if (para.find("--play") == 0) {
 			std::string args = para.find("--play=") == 0 ? para.substr(para.find("=") + 1) : "";
-			std::shared_ptr<agent> who(new player(args));
+			std::shared_ptr<agent> who(new player(args)); // TODO: change to your player agent
 			lounge[who->name()] = who;
 		} else if (para.find("--evil") == 0) {
 			std::string args = para.find("--evil=") == 0 ? para.substr(para.find("=") + 1) : "";
-			std::shared_ptr<agent> who(new rndenv(args));
+			std::shared_ptr<agent> who(new rndenv(args)); // TODO: change to your environment agent
 			lounge[who->name()] = who;
 		} else if (para.find("--save") == 0) {
 			save_statistics = true;
@@ -62,15 +62,13 @@ int shell(int argc, const char* argv[]) {
 		}
 	}
 
-	std::ostream& dout = debug_mode ? std::cerr : *(new std::ofstream);
-
 	std::regex match_open  ("^match \\S+ (play|evil) open \\S+:\\S+$");
 	std::regex match_take  ("^match \\S+ (play|evil) take turn$");
 	std::regex match_move  ("^match \\S+ (play|evil) move \\S+$");
 	std::regex match_close ("^match \\S+ (play|evil) close \\S+$");
 
-	std::string command;
-	while (std::getline(std::cin, command)) {
+	std::ostream& dout = debug_mode ? std::cerr : *(new std::ofstream);
+	for (std::string command; std::getline(std::cin, command); ) {
 		dout << "<< " << command;
 		try {
 			if (std::regex_match(command, match_take)) {
