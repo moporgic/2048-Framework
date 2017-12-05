@@ -152,7 +152,7 @@ int shell(int argc, const char* argv[]) {
 				m.evil->close_episode(win);
 
 				if (save_statistics) {
-					std::string save = id + ".stat";
+					std::string save = id + "-" + win + ".stat";
 					dout << "saving statistic to " << save << "..." << std::endl;
 					std::ofstream out;
 					out.open(save.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
