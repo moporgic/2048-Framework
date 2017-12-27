@@ -46,32 +46,30 @@ public:
 	 *  '22.4%': 22.4% (224 games) terminated with 8192-tiles (the largest) in saved games
 	 */
 	void show() const {
-		size_t blk = std::min(data.size(), block);
-		size_t sum = 0, max = 0, opc = 0, stat[16] = { 0 };
-		uint64_t duration = 0;
+		unsigned blk = std::min(data.size(), block);
+		unsigned sum = 0, max = 0, opc = 0, stat[16] = { 0 };
+		unsigned duration = 0;
 		auto it = data.end();
 		for (size_t i = 0; i < blk; i++) {
 			auto& path = *(--it);
 			board game;
-			size_t score = 0;
-			for (const action& move : path)
-				score += move.apply(game);
+			unsigned score = path.apply(game);
 			sum += score;
 			max = std::max(score, max);
 			opc += (path.size() - 2) / 2;
 			stat[*std::max_element(&game(0), &game(0) + 16)]++;
-			duration += (path.tock_time() - path.tick_time());
+			duration += path.duration();
 		}
 		float coef = 100.0 / blk;
-		uint64_t avg = sum / blk;
-		uint64_t ops = opc * 1000.0 / duration;
+		unsigned avg = sum / blk;
+		unsigned ops = opc * 1000.0 / duration;
 		std::cout << count << "\t";
 		std::cout << "avg = " << avg << ", ";
 		std::cout << "max = " << max << ", ";
 		std::cout << "ops = " << ops << std::endl;
 		for (size_t t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
-			size_t accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
+			unsigned accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
 			std::cout << "\t" << ((1 << t) & -2u) << "\t" << (accu * coef) << "%";
 			std::cout << "\t(" << (stat[t] * coef) << "%)" << std::endl;
 		}
@@ -92,11 +90,11 @@ public:
 	void open_episode(const std::string& flag = "") {
 		if (count++ >= limit) data.pop_front();
 		data.emplace_back();
-		data.back().tick();
+		data.back().open_episode(flag);
 	}
 
 	void close_episode(const std::string& flag = "") {
-		data.back().tock();
+		data.back().close_episode(flag);
 		if (count % block == 0) show();
 	}
 
@@ -104,12 +102,12 @@ public:
 		return {};
 	}
 
-	void save_action(const action& move) {
-		data.back().push_back(move);
+	void save_action(action move) {
+		data.back().save_action(move);
 	}
 
 	agent& take_turns(agent& play, agent& evil) {
-		return (std::max(data.back().size()  + 1, size_t(2)) % 2) ? play : evil;
+		return data.back().take_turns(play, evil);
 	}
 
 	agent& last_turns(agent& play, agent& evil) {
@@ -133,45 +131,102 @@ public:
 	}
 
 private:
-	class record : public std::vector<action> {
+
+	class record {
 	public:
-		record() { reserve(32768); }
-		void tick() { time[0] = milli(); }
-		void tock() { time[1] = milli(); }
-		uint64_t tick_time() const { return time[0]; }
-		uint64_t tock_time() const { return time[1]; }
+		record() { moves.reserve(32768); }
+
+		void open_episode(const std::string& tag) {
+			open.tag = tag;
+			open.when = millisec();
+		}
+		void close_episode(const std::string& tag) {
+			close.tag = tag;
+			close.when = millisec();
+		}
+
+		agent& take_turns(agent& play, agent& evil) {
+			temp.t0 = millisec();
+			return (std::max(size() + 1, size_t(2)) % 2) ? play : evil;
+		}
+		void save_action(action a) {
+			temp.t1 = millisec();
+			temp.code = a;
+			moves.push_back(temp);
+		}
+
+		size_t size() const { return moves.size(); }
+
+		int apply(board& b) const {
+			int score = 0;
+			for (size_t i = 0; i < moves.size(); i++)
+				score += action(moves[i].code).apply(b);
+			return score;
+		}
+
+		time_t duration() const {
+			return close.when - open.when;
+		}
 
 		friend std::ostream& operator <<(std::ostream& out, const record& rec) {
-			auto size = rec.size();
-			auto time = rec.time;
+			auto size = rec.moves.size();
 			out.write(reinterpret_cast<char*>(&size), sizeof(size));
-			for (const action& act : rec) {
-				short opcode = int(act);
-				out.write(reinterpret_cast<const char*>(&opcode), sizeof(opcode));
-			}
-			out.write(reinterpret_cast<const char*>(time), sizeof(time[0]) * 2);
+			for (const move& mv : rec.moves) out << mv;
+			out << rec.open << rec.close;
 			return out;
 		}
 		friend std::istream& operator >>(std::istream& in, record& rec) {
-			auto size = rec.size();
-			auto time = rec.time;
+			auto size = rec.moves.size();
 			in.read(reinterpret_cast<char*>(&size), sizeof(size));
-			rec.reserve(size);
-			for (size_t i = 0; i < size; i++) {
-				short opcode;
-				in.read(reinterpret_cast<char*>(&opcode), sizeof(opcode));
-				rec.emplace_back(int(opcode));
-			}
-			in.read(reinterpret_cast<char*>(time), sizeof(time[0]) * 2);
+			rec.moves.reserve(size);
+			for (size_t i = 0; i < size && in >> rec.temp; i++) rec.moves.push_back(rec.temp);
+			in >> rec.open >> rec.close;
 			return in;
 		}
 
 	private:
-		uint64_t milli() const {
+		time_t millisec() const {
 			auto now = std::chrono::system_clock::now().time_since_epoch();
 			return std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
 		}
-		uint64_t time[2];
+
+		struct move {
+			int code;
+			time_t t0;
+			time_t t1;
+			friend std::ostream& operator <<(std::ostream& out, const move& mv) {
+				out.write(reinterpret_cast<const char*>(&mv.code), sizeof(mv.code));
+				out.write(reinterpret_cast<const char*>(&mv.t0), sizeof(mv.t0));
+				out.write(reinterpret_cast<const char*>(&mv.t1), sizeof(mv.t1));
+				return out;
+			}
+			friend std::istream& operator >>(std::istream& in, move& mv) {
+				in.read(reinterpret_cast<char*>(&mv.code), sizeof(mv.code));
+				in.read(reinterpret_cast<char*>(&mv.t0), sizeof(mv.t0));
+				in.read(reinterpret_cast<char*>(&mv.t1), sizeof(mv.t1));
+				return in;
+			}
+		};
+
+		struct meta {
+			std::string tag;
+			time_t when;
+			friend std::ostream& operator <<(std::ostream& out, const meta& m) {
+				out.write(reinterpret_cast<const char*>(m.tag.c_str()), m.tag.size() + 1);
+				out.write(reinterpret_cast<const char*>(&m.when), sizeof(m.when));
+				return out;
+			}
+			friend std::istream& operator >>(std::istream& in, meta& m) {
+				for (char ch; in.read(&ch, 1) && ch; m.tag.push_back(ch));
+				in.read(reinterpret_cast<char*>(&m.when), sizeof(m.when));
+				return in;
+			}
+		};
+
+		std::vector<move> moves;
+		move temp;
+		meta open;
+		meta close;
 	};
 
 	size_t total;
