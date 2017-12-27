@@ -47,8 +47,8 @@ public:
 	 */
 	void show() const {
 		unsigned blk = std::min(data.size(), block);
-		unsigned sum = 0, max = 0, opc = 0, stat[16] = { 0 };
-		unsigned duration = 0;
+		unsigned sum = 0, max = 0, stat[16] = { 0 };
+		unsigned pop = 0, eop = 0, pdu = 0, edu = 0;
 		auto it = data.end();
 		for (size_t i = 0; i < blk; i++) {
 			auto& path = *(--it);
@@ -56,17 +56,19 @@ public:
 			unsigned score = path.apply(game);
 			sum += score;
 			max = std::max(score, max);
-			opc += (path.size() - 2) / 2;
-			stat[*std::max_element(&game(0), &game(0) + 16)]++;
-			duration += path.duration();
+			stat[*std::max_element(&game(0), &game(16))]++;
+			pop += path.step('p');
+			eop += path.step('e');
+			pdu += path.duration('p');
+			edu += path.duration('e');
 		}
 		float coef = 100.0 / blk;
 		unsigned avg = sum / blk;
-		unsigned ops = opc * 1000.0 / duration;
+		unsigned pops = pop * 1000.0 / pdu, eops = eop * 1000.0 / edu;
 		std::cout << count << "\t";
 		std::cout << "avg = " << avg << ", ";
 		std::cout << "max = " << max << ", ";
-		std::cout << "ops = " << ops << std::endl;
+		std::cout << "ops = " << pops << " / " << eops << std::endl;
 		for (size_t t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
 			unsigned accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
@@ -146,16 +148,23 @@ private:
 		}
 
 		agent& take_turns(agent& play, agent& evil) {
-			temp.t0 = millisec();
+			temp.t0 = high_resolution_timestamp() ? millisec() : 0;
 			return (std::max(size() + 1, size_t(2)) % 2) ? play : evil;
 		}
 		void save_action(action a) {
-			temp.t1 = millisec();
+			temp.t1 = high_resolution_timestamp() ? millisec() : 0;
 			temp.code = a;
 			moves.push_back(temp);
 		}
 
 		size_t size() const { return moves.size(); }
+
+		size_t step(char who = '*') const {
+			if (who == '*') return size();
+			if (who == 'p') return (size() - (2 - size() % 2)) / 2;
+			if (who == 'e') return size() - (size() - (2 - size() % 2)) / 2;
+			return size();
+		}
 
 		int apply(board& b) const {
 			int score = 0;
@@ -164,8 +173,16 @@ private:
 			return score;
 		}
 
-		time_t duration() const {
-			return close.when - open.when;
+		time_t duration(char who = '*') const {
+			if (who == '*') return close.when - open.when;
+			time_t du = 0;
+			if (who == 'p') {
+				for (size_t i = 2; i < moves.size(); i += 2) du += (moves[i].t1 - moves[i].t0);
+			} else if (who == 'e') {
+				du = moves[0].t1 - moves[0].t0;
+				for (size_t i = 1; i < moves.size(); i += 2) du += (moves[i].t1 - moves[i].t0);
+			}
+			return du;
 		}
 
 		friend std::ostream& operator <<(std::ostream& out, const record& rec) {
@@ -185,6 +202,9 @@ private:
 		}
 
 	private:
+
+		static constexpr bool high_resolution_timestamp() { return true; }
+
 		time_t millisec() const {
 			auto now = std::chrono::system_clock::now().time_since_epoch();
 			return std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
