@@ -46,29 +46,36 @@ public:
 	 *  '22.4%': 22.4% (224 games) terminated with 8192-tiles (the largest) in saved games
 	 */
 	void show() const {
-		unsigned blk = std::min(data.size(), block);
+		size_t blk = std::min(data.size(), block);
 		unsigned sum = 0, max = 0, stat[16] = { 0 };
-		unsigned pop = 0, eop = 0, pdu = 0, edu = 0;
+		size_t sop = 0, pop = 0, eop = 0;
+		time_t sdu = 0, pdu = 0, edu = 0;
 		auto it = data.end();
 		for (size_t i = 0; i < blk; i++) {
 			auto& path = *(--it);
-			board game;
-			unsigned score = path.apply(game);
+			board b;
+			unsigned score = path.apply(b);
 			sum += score;
 			max = std::max(score, max);
-			stat[*std::max_element(&game(0), &game(16))]++;
+			stat[*std::max_element(&b(0), &b(16))]++;
+			sop += path.step('*');
 			pop += path.step('p');
 			eop += path.step('e');
+			sdu += path.duration('*');
 			pdu += path.duration('p');
 			edu += path.duration('e');
 		}
 		float coef = 100.0 / blk;
 		unsigned avg = sum / blk;
-		unsigned pops = pop * 1000.0 / pdu, eops = eop * 1000.0 / edu;
+		unsigned sops = sop * 1000.0 / sdu;
+		unsigned pops = pop * 1000.0 / pdu;
+		unsigned eops = eop * 1000.0 / edu;
 		std::cout << count << "\t";
 		std::cout << "avg = " << avg << ", ";
 		std::cout << "max = " << max << ", ";
-		std::cout << "ops = " << pops << " / " << eops << std::endl;
+		std::cout << "ops = " << sops;
+		if (high_resolution_timestamp()) std::cout << " (" << pops << "|" << eops << ")";
+		std::cout << std::endl;
 		for (size_t t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
 			unsigned accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
@@ -136,20 +143,18 @@ private:
 
 	class record {
 	public:
-		record() { moves.reserve(32768); }
+		record() { moves.reserve(10000); }
 
 		void open_episode(const std::string& tag) {
-			open.tag = tag;
-			open.when = millisec();
+			open = { tag, millisec() };
 		}
 		void close_episode(const std::string& tag) {
-			close.tag = tag;
-			close.when = millisec();
+			close = { tag, millisec() };
 		}
 
 		agent& take_turns(agent& play, agent& evil) {
 			temp.t0 = high_resolution_timestamp() ? millisec() : 0;
-			return (std::max(size() + 1, size_t(2)) % 2) ? play : evil;
+			return (std::max(step() + 1, size_t(2)) % 2) ? play : evil;
 		}
 		void save_action(action a) {
 			temp.t1 = high_resolution_timestamp() ? millisec() : 0;
@@ -157,13 +162,18 @@ private:
 			moves.push_back(temp);
 		}
 
-		size_t size() const { return moves.size(); }
+		std::vector<action> actions() const {
+			std::vector<action> a;
+			a.reserve(moves.size());
+			for (auto mv : moves) a.push_back(mv.code);
+			return a;
+		}
 
 		size_t step(char who = '*') const {
-			if (who == '*') return size();
-			if (who == 'p') return (size() - (2 - size() % 2)) / 2;
-			if (who == 'e') return size() - (size() - (2 - size() % 2)) / 2;
-			return size();
+			size_t size = moves.size();
+			if (who == 'p') return (size - (2 - size % 2)) / 2;
+			if (who == 'e') return size - (size - (2 - size % 2)) / 2;
+			return size;
 		}
 
 		int apply(board& b) const {
@@ -174,15 +184,17 @@ private:
 		}
 
 		time_t duration(char who = '*') const {
-			if (who == '*') return close.when - open.when;
-			time_t du = 0;
-			if (who == 'p') {
+			if (who == 'p' && high_resolution_timestamp()) {
+				time_t du = 0;
 				for (size_t i = 2; i < moves.size(); i += 2) du += (moves[i].t1 - moves[i].t0);
-			} else if (who == 'e') {
-				du = moves[0].t1 - moves[0].t0;
-				for (size_t i = 1; i < moves.size(); i += 2) du += (moves[i].t1 - moves[i].t0);
+				return du;
 			}
-			return du;
+			if (who == 'e' && high_resolution_timestamp()) {
+				time_t du = moves[0].t1 - moves[0].t0;
+				for (size_t i = 1; i < moves.size(); i += 2) du += (moves[i].t1 - moves[i].t0);
+				return du;
+			}
+			return close.when - open.when;
 		}
 
 		friend std::ostream& operator <<(std::ostream& out, const record& rec) {
@@ -202,8 +214,6 @@ private:
 		}
 
 	private:
-
-		static constexpr bool high_resolution_timestamp() { return true; }
 
 		time_t millisec() const {
 			auto now = std::chrono::system_clock::now().time_since_epoch();
@@ -248,6 +258,8 @@ private:
 		meta open;
 		meta close;
 	};
+
+	static constexpr bool high_resolution_timestamp() { return true; }
 
 	size_t total;
 	size_t block;
