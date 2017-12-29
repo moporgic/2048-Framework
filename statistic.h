@@ -25,6 +25,129 @@ public:
 		  count(0) {}
 
 public:
+	class episode {
+	friend class statistic;
+	public:
+		episode() { moves.reserve(10000); }
+
+	protected:
+		void open_episode(const std::string& tag) {
+			open = { tag, millisec() };
+		}
+		void close_episode(const std::string& tag) {
+			close = { tag, millisec() };
+		}
+		agent& take_turns(agent& play, agent& evil) {
+			temp.t0 = high_resolution_timestamp() ? millisec() : 0;
+			return (std::max(step() + 1, size_t(2)) % 2) ? play : evil;
+		}
+		void save_action(action a) {
+			temp.t1 = high_resolution_timestamp() ? millisec() : 0;
+			temp.code = a;
+			moves.push_back(temp);
+		}
+
+	public:
+		std::vector<action> actions() const {
+			std::vector<action> a;
+			a.reserve(moves.size());
+			for (auto mv : moves) a.push_back(mv.code);
+			return a;
+		}
+		size_t step(char who = '*') const {
+			size_t size = moves.size();
+			if (who == 'p') return (size - (2 - size % 2)) / 2;
+			if (who == 'e') return size - (size - (2 - size % 2)) / 2;
+			return size;
+		}
+		int apply(board& b) const {
+			int score = 0;
+			for (size_t i = 0; i < moves.size(); i++)
+				score += action(moves[i].code).apply(b);
+			return score;
+		}
+		time_t duration(char who = '*') const {
+			if (who == 'p' && high_resolution_timestamp()) {
+				time_t du = 0;
+				for (size_t i = 2; i < moves.size(); i += 2) du += (moves[i].t1 - moves[i].t0);
+				return du;
+			}
+			if (who == 'e' && high_resolution_timestamp()) {
+				time_t du = moves[0].t1 - moves[0].t0;
+				for (size_t i = 1; i < moves.size(); i += 2) du += (moves[i].t1 - moves[i].t0);
+				return du;
+			}
+			return close.when - open.when;
+		}
+		std::string tag(char type = 'o') {
+			if (type == 'o') return open.tag;
+			if (type == 'c') return close.tag;
+			return "";
+		}
+
+		friend std::ostream& operator <<(std::ostream& out, const episode& rec) {
+			auto size = rec.moves.size();
+			out.write(reinterpret_cast<char*>(&size), sizeof(size));
+			for (const move& mv : rec.moves) out << mv;
+			out << rec.open << rec.close;
+			return out;
+		}
+		friend std::istream& operator >>(std::istream& in, episode& rec) {
+			auto size = rec.moves.size();
+			in.read(reinterpret_cast<char*>(&size), sizeof(size));
+			rec.moves.reserve(size);
+			for (size_t i = 0; i < size && in >> rec.temp; i++) rec.moves.push_back(rec.temp);
+			in >> rec.open >> rec.close;
+			return in;
+		}
+
+	private:
+
+		time_t millisec() const {
+			auto now = std::chrono::system_clock::now().time_since_epoch();
+			return std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+		}
+
+		struct move {
+			int code;
+			time_t t0;
+			time_t t1;
+			friend std::ostream& operator <<(std::ostream& out, const move& mv) {
+				out.write(reinterpret_cast<const char*>(&mv.code), sizeof(mv.code));
+				out.write(reinterpret_cast<const char*>(&mv.t0), sizeof(mv.t0));
+				out.write(reinterpret_cast<const char*>(&mv.t1), sizeof(mv.t1));
+				return out;
+			}
+			friend std::istream& operator >>(std::istream& in, move& mv) {
+				in.read(reinterpret_cast<char*>(&mv.code), sizeof(mv.code));
+				in.read(reinterpret_cast<char*>(&mv.t0), sizeof(mv.t0));
+				in.read(reinterpret_cast<char*>(&mv.t1), sizeof(mv.t1));
+				return in;
+			}
+		};
+
+		struct meta {
+			std::string tag;
+			time_t when;
+			friend std::ostream& operator <<(std::ostream& out, const meta& m) {
+				out.write(reinterpret_cast<const char*>(m.tag.c_str()), m.tag.size() + 1);
+				out.write(reinterpret_cast<const char*>(&m.when), sizeof(m.when));
+				return out;
+			}
+			friend std::istream& operator >>(std::istream& in, meta& m) {
+				for (char ch; in.read(&ch, 1) && ch; m.tag.push_back(ch));
+				in.read(reinterpret_cast<char*>(&m.when), sizeof(m.when));
+				return in;
+			}
+		};
+
+		std::vector<move> moves;
+		move temp;
+		meta open;
+		meta close;
+	};
+
+public:
 	/**
 	 * show the statistic of last 'block' games
 	 *
@@ -123,10 +246,16 @@ public:
 		return take_turns(evil, play);
 	}
 
+	episode& at(size_t i) {
+		auto it = data.begin();
+		while (i--) it++;
+		return *it;
+	}
+
 	friend std::ostream& operator <<(std::ostream& out, const statistic& stat) {
 		auto size = stat.data.size();
 		out.write(reinterpret_cast<char*>(&size), sizeof(size));
-		for (const record& rec : stat.data) out << rec;
+		for (const episode& rec : stat.data) out << rec;
 		return out;
 	}
 
@@ -135,135 +264,16 @@ public:
 		in.read(reinterpret_cast<char*>(&size), sizeof(size));
 		stat.total = stat.block = stat.limit = stat.count = size;
 		stat.data.resize(size);
-		for (record& rec : stat.data) in >> rec;
+		for (episode& rec : stat.data) in >> rec;
 		return in;
 	}
 
 private:
-
-	class record {
-	public:
-		record() { moves.reserve(10000); }
-
-		void open_episode(const std::string& tag) {
-			open = { tag, millisec() };
-		}
-		void close_episode(const std::string& tag) {
-			close = { tag, millisec() };
-		}
-
-		agent& take_turns(agent& play, agent& evil) {
-			temp.t0 = high_resolution_timestamp() ? millisec() : 0;
-			return (std::max(step() + 1, size_t(2)) % 2) ? play : evil;
-		}
-		void save_action(action a) {
-			temp.t1 = high_resolution_timestamp() ? millisec() : 0;
-			temp.code = a;
-			moves.push_back(temp);
-		}
-
-		std::vector<action> actions() const {
-			std::vector<action> a;
-			a.reserve(moves.size());
-			for (auto mv : moves) a.push_back(mv.code);
-			return a;
-		}
-
-		size_t step(char who = '*') const {
-			size_t size = moves.size();
-			if (who == 'p') return (size - (2 - size % 2)) / 2;
-			if (who == 'e') return size - (size - (2 - size % 2)) / 2;
-			return size;
-		}
-
-		int apply(board& b) const {
-			int score = 0;
-			for (size_t i = 0; i < moves.size(); i++)
-				score += action(moves[i].code).apply(b);
-			return score;
-		}
-
-		time_t duration(char who = '*') const {
-			if (who == 'p' && high_resolution_timestamp()) {
-				time_t du = 0;
-				for (size_t i = 2; i < moves.size(); i += 2) du += (moves[i].t1 - moves[i].t0);
-				return du;
-			}
-			if (who == 'e' && high_resolution_timestamp()) {
-				time_t du = moves[0].t1 - moves[0].t0;
-				for (size_t i = 1; i < moves.size(); i += 2) du += (moves[i].t1 - moves[i].t0);
-				return du;
-			}
-			return close.when - open.when;
-		}
-
-		friend std::ostream& operator <<(std::ostream& out, const record& rec) {
-			auto size = rec.moves.size();
-			out.write(reinterpret_cast<char*>(&size), sizeof(size));
-			for (const move& mv : rec.moves) out << mv;
-			out << rec.open << rec.close;
-			return out;
-		}
-		friend std::istream& operator >>(std::istream& in, record& rec) {
-			auto size = rec.moves.size();
-			in.read(reinterpret_cast<char*>(&size), sizeof(size));
-			rec.moves.reserve(size);
-			for (size_t i = 0; i < size && in >> rec.temp; i++) rec.moves.push_back(rec.temp);
-			in >> rec.open >> rec.close;
-			return in;
-		}
-
-	private:
-
-		time_t millisec() const {
-			auto now = std::chrono::system_clock::now().time_since_epoch();
-			return std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
-		}
-
-		struct move {
-			int code;
-			time_t t0;
-			time_t t1;
-			friend std::ostream& operator <<(std::ostream& out, const move& mv) {
-				out.write(reinterpret_cast<const char*>(&mv.code), sizeof(mv.code));
-				out.write(reinterpret_cast<const char*>(&mv.t0), sizeof(mv.t0));
-				out.write(reinterpret_cast<const char*>(&mv.t1), sizeof(mv.t1));
-				return out;
-			}
-			friend std::istream& operator >>(std::istream& in, move& mv) {
-				in.read(reinterpret_cast<char*>(&mv.code), sizeof(mv.code));
-				in.read(reinterpret_cast<char*>(&mv.t0), sizeof(mv.t0));
-				in.read(reinterpret_cast<char*>(&mv.t1), sizeof(mv.t1));
-				return in;
-			}
-		};
-
-		struct meta {
-			std::string tag;
-			time_t when;
-			friend std::ostream& operator <<(std::ostream& out, const meta& m) {
-				out.write(reinterpret_cast<const char*>(m.tag.c_str()), m.tag.size() + 1);
-				out.write(reinterpret_cast<const char*>(&m.when), sizeof(m.when));
-				return out;
-			}
-			friend std::istream& operator >>(std::istream& in, meta& m) {
-				for (char ch; in.read(&ch, 1) && ch; m.tag.push_back(ch));
-				in.read(reinterpret_cast<char*>(&m.when), sizeof(m.when));
-				return in;
-			}
-		};
-
-		std::vector<move> moves;
-		move temp;
-		meta open;
-		meta close;
-	};
-
 	static constexpr bool high_resolution_timestamp() { return true; }
 
 	size_t total;
 	size_t block;
 	size_t limit;
 	size_t count;
-	std::list<record> data;
+	std::list<episode> data;
 };
