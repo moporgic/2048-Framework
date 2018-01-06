@@ -251,6 +251,12 @@ public:
 		while (i--) it++;
 		return *it;
 	}
+	episode& front() {
+		return data.front();
+	}
+	episode& back() {
+		return data.back();
+	}
 
 	friend std::ostream& operator <<(std::ostream& out, const statistic& stat) {
 		auto size = stat.data.size();
