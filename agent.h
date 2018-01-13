@@ -60,7 +60,7 @@ public:
 		for (int pos : space) {
 			if (after(pos) != 0) continue;
 			std::uniform_int_distribution<int> popup(0, 9);
-			int tile = popup(engine) ? 1 : 2;
+			int tile = popup(engine) ? 1 : 2; // TODO: tile = int(property["tile"]);
 			return action::place(tile, pos);
 		}
 		return action();
