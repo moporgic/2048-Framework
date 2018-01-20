@@ -43,6 +43,7 @@ int shell(int argc, const char* argv[]) {
 	std::map<std::string, std::shared_ptr<match>> arena;
 	bool save_statistics = false;
 	bool debug_mode = false;
+	std::string name;
 
 	for (int i = 1; i < argc; i++) {
 		std::string para(argv[i]);
@@ -50,20 +51,22 @@ int shell(int argc, const char* argv[]) {
 			std::string args = para.find("--play=") == 0 ? para.substr(para.find("=") + 1) : "";
 			std::shared_ptr<agent> who(new player(args)); // TODO: change to your player agent
 			lounge[who->name()] = who;
-			std::cout << "register " << who->name() << " as play" << std::endl;
+			std::cout << "register " << who->name() << " as " << who->role() << std::endl;
 		} else if (para.find("--evil") == 0) {
 			std::string args = para.find("--evil=") == 0 ? para.substr(para.find("=") + 1) : "";
 			std::shared_ptr<agent> who(new rndenv(args)); // TODO: change to your environment agent
 			lounge[who->name()] = who;
-			std::cout << "register " << who->name() << " as evil" << std::endl;
+			std::cout << "register " << who->name() << " as " << who->role() << std::endl;
 		} else if (para.find("--save") == 0) {
 			save_statistics = true;
 		} else if (para.find("--debug") == 0) {
 			debug_mode = true;
 		} else if (para.find("--name=") == 0) {
-			std::cout << "name " << para.substr(para.find("=") + 1) << std::endl;
+			name = para.substr(para.find("=") + 1);
 		}
 	}
+
+	if (name.size()) std::cout << "name " << name << std::endl;
 
 	std::regex match_open  ("^match \\S+ open \\S+:\\S+$");
 	std::regex match_take  ("^match \\S+ (play|evil) take turn$");
