@@ -72,7 +72,7 @@ int shell(int argc, const char* argv[]) {
 
 	std::ostream& dout = debug_mode ? std::cerr : *(new std::ofstream);
 	for (std::string command; std::getline(std::cin, command); ) {
-		dout << "<< " << command << std::endl;
+		dout << ">> " << command << std::endl;
 		try {
 			if (std::regex_match(command, match_take)) {
 				std::string id, role, buf;
@@ -88,7 +88,7 @@ int shell(int argc, const char* argv[]) {
 				oss << "match " << id << " " << role << " move " << std::hex << int(a);
 				std::string out = oss.str();
 				std::cout << out << std::endl;
-				dout << ">> " << out << std::endl;
+				dout << "<< " << out << std::endl;
 
 			} else if (std::regex_match(command, match_move)) {
 				std::string id, role, buf; int code;
@@ -130,10 +130,10 @@ int shell(int argc, const char* argv[]) {
 					who->open_episode(role == "play" ? "~:" + m.evil->name() : m.play->name() + ":~");
 
 					std::stringstream oss;
-					oss << "match " << id << " " << role << " ready" << std::endl;
+					oss << "match " << id << " " << role << " ready";
 					std::string out = oss.str();
 					std::cout << out << std::endl;
-					dout << ">> " << out << std::endl;
+					dout << "<< " << out << std::endl;
 					return who;
 				};
 
