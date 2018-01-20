@@ -50,14 +50,18 @@ int shell(int argc, const char* argv[]) {
 			std::string args = para.find("--play=") == 0 ? para.substr(para.find("=") + 1) : "";
 			std::shared_ptr<agent> who(new player(args)); // TODO: change to your player agent
 			lounge[who->name()] = who;
+			std::cout << "register " << who->name() << " as play" << std::endl;
 		} else if (para.find("--evil") == 0) {
 			std::string args = para.find("--evil=") == 0 ? para.substr(para.find("=") + 1) : "";
 			std::shared_ptr<agent> who(new rndenv(args)); // TODO: change to your environment agent
 			lounge[who->name()] = who;
+			std::cout << "register " << who->name() << " as evil" << std::endl;
 		} else if (para.find("--save") == 0) {
 			save_statistics = true;
 		} else if (para.find("--debug") == 0) {
 			debug_mode = true;
+		} else if (para.find("--name=") == 0) {
+			std::cout << "name " << para.substr(para.find("=") + 1) << std::endl;
 		}
 	}
 
