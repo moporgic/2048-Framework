@@ -34,7 +34,6 @@
 # Folders and settings
 /Release
 /.settings
-/.cproject
-/.project
+/.*project
 /Default/
 /Debug/
