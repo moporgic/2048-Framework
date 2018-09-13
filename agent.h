@@ -86,7 +86,7 @@ public:
 		std::shuffle(opcode, opcode + 4, engine);
 		for (int op : opcode) {
 			board b = before;
-			if (b.move(op) != -1) return action::move(op);
+			if (b.slide(op) != -1) return action::slide(op);
 		}
 		return action();
 	}

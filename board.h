@@ -44,17 +44,17 @@ public:
 	 * apply an action to the board
 	 * return the reward gained by the action, or -1 if the action is illegal
 	 */
-	int move(const int& opcode) {
+	int slide(const int& opcode) {
 		switch (opcode) {
-		case 0: return move_up();
-		case 1: return move_right();
-		case 2: return move_down();
-		case 3: return move_left();
+		case 0: return slide_up();
+		case 1: return slide_right();
+		case 2: return slide_down();
+		case 3: return slide_left();
 		default: return -1;
 		}
 	}
 
-	int move_left() {
+	int slide_left() {
 		board prev = *this;
 		int score = 0;
 		for (int r = 0; r < 4; r++) {
@@ -81,21 +81,21 @@ public:
 		}
 		return (*this != prev) ? score : -1;
 	}
-	int move_right() {
+	int slide_right() {
 		reflect_horizontal();
-		int score = move_left();
+		int score = slide_left();
 		reflect_horizontal();
 		return score;
 	}
-	int move_up() {
+	int slide_up() {
 		rotate_right();
-		int score = move_right();
+		int score = slide_right();
 		rotate_left();
 		return score;
 	}
-	int move_down() {
+	int slide_down() {
 		rotate_right();
-		int score = move_left();
+		int score = slide_left();
 		rotate_left();
 		return score;
 	}
