@@ -3,8 +3,10 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 #include <chrono>
 #include <numeric>
+#include <regex>
 #include "board.h"
 #include "action.h"
 #include "agent.h"
@@ -38,11 +40,11 @@ public:
 			close = { tag, millisec() };
 		}
 		agent& take_turns(agent& play, agent& evil) {
-			temp.t0 = high_resolution_timestamp() ? millisec() : 0;
+			temp.time = millisec();
 			return (std::max(step() + 1, size_t(2)) % 2) ? play : evil;
 		}
 		void save_action(action a) {
-			temp.t1 = high_resolution_timestamp() ? millisec() : 0;
+			temp.time = millisec() - temp.time;
 			temp.code = a;
 			moves.push_back(temp);
 		}
@@ -67,14 +69,14 @@ public:
 			return score;
 		}
 		time_t duration(char who = '*') const {
-			if (who == 'p' && high_resolution_timestamp()) {
+			if (who == 'p') {
 				time_t du = 0;
-				for (size_t i = 2; i < moves.size(); i += 2) du += (moves[i].t1 - moves[i].t0);
+				for (size_t i = 2; i < moves.size(); i += 2) du += (moves[i].time);
 				return du;
 			}
-			if (who == 'e' && high_resolution_timestamp()) {
-				time_t du = moves[0].t1 - moves[0].t0;
-				for (size_t i = 1; i < moves.size(); i += 2) du += (moves[i].t1 - moves[i].t0);
+			if (who == 'e') {
+				time_t du = moves[0].time;
+				for (size_t i = 1; i < moves.size(); i += 2) du += (moves[i].time);
 				return du;
 			}
 			return close.when - open.when;
@@ -86,18 +88,23 @@ public:
 		}
 
 		friend std::ostream& operator <<(std::ostream& out, const episode& rec) {
-			auto size = rec.moves.size();
-			out.write(reinterpret_cast<char*>(&size), sizeof(size));
+			out << rec.open << '|';
 			for (const move& mv : rec.moves) out << mv;
-			out << rec.open << rec.close;
+			out << '|' << rec.close;
 			return out;
 		}
 		friend std::istream& operator >>(std::istream& in, episode& rec) {
-			auto size = rec.moves.size();
-			in.read(reinterpret_cast<char*>(&size), sizeof(size));
-			rec.moves.reserve(size);
-			for (size_t i = 0; i < size && in >> rec.temp; i++) rec.moves.push_back(rec.temp);
-			in >> rec.open >> rec.close;
+			std::string token;
+			std::getline(in, token, '|');
+			std::stringstream(token) >> rec.open;
+			std::getline(in, token, '|');
+			std::regex pattern("[#0-9A-F][0-9A-Z](\\([0-9]+\\))?");
+			for (std::smatch match; std::regex_search(token, match, pattern); token = match.suffix()) {
+				rec.moves.emplace_back();
+				std::stringstream(match.str()) >> rec.moves.back();
+			}
+			std::getline(in, token, '|');
+			std::stringstream(token) >> rec.close;
 			return in;
 		}
 
@@ -109,19 +116,22 @@ public:
 		}
 
 		struct move {
-			int code;
-			time_t t0;
-			time_t t1;
-			friend std::ostream& operator <<(std::ostream& out, const move& mv) {
-				out.write(reinterpret_cast<const char*>(&mv.code), sizeof(mv.code));
-				out.write(reinterpret_cast<const char*>(&mv.t0), sizeof(mv.t0));
-				out.write(reinterpret_cast<const char*>(&mv.t1), sizeof(mv.t1));
-				return out;
+			action code;
+			time_t time;
+			friend std::ostream& operator <<(std::ostream& out, const move& m) {
+				if (m.time)
+					return out << m.code << '(' << m.time << ')';
+				else
+					return out << m.code;
 			}
-			friend std::istream& operator >>(std::istream& in, move& mv) {
-				in.read(reinterpret_cast<char*>(&mv.code), sizeof(mv.code));
-				in.read(reinterpret_cast<char*>(&mv.t0), sizeof(mv.t0));
-				in.read(reinterpret_cast<char*>(&mv.t1), sizeof(mv.t1));
+			friend std::istream& operator >>(std::istream& in, move& m) {
+				in >> m.code;
+				m.time = 0;
+				if (in.peek() == '(') {
+					in.ignore(1);
+					in >> m.time;
+					in.ignore(1);
+				}
 				return in;
 			}
 		};
@@ -130,14 +140,10 @@ public:
 			std::string tag;
 			time_t when;
 			friend std::ostream& operator <<(std::ostream& out, const meta& m) {
-				out.write(reinterpret_cast<const char*>(m.tag.c_str()), m.tag.size() + 1);
-				out.write(reinterpret_cast<const char*>(&m.when), sizeof(m.when));
-				return out;
+				return out << m.tag << "@" << m.when;
 			}
 			friend std::istream& operator >>(std::istream& in, meta& m) {
-				for (char ch; in.read(&ch, 1) && ch; m.tag.push_back(ch));
-				in.read(reinterpret_cast<char*>(&m.when), sizeof(m.when));
-				return in;
+				return std::getline(in, m.tag, '@') >> m.when;
 			}
 		};
 
@@ -170,7 +176,7 @@ public:
 	 */
 	void show() const {
 		size_t blk = std::min(data.size(), block);
-		unsigned sum = 0, max = 0, stat[16] = { 0 };
+		unsigned sum = 0, max = 0, stat[64] = { 0 };
 		size_t sop = 0, pop = 0, eop = 0;
 		time_t sdu = 0, pdu = 0, edu = 0;
 		auto it = data.end();
@@ -197,7 +203,7 @@ public:
 		std::cout << "avg = " << avg << ", ";
 		std::cout << "max = " << max << ", ";
 		std::cout << "ops = " << sops;
-		if (high_resolution_timestamp()) std::cout << " (" << pops << "|" << eops << ")";
+		std::cout << " (" << pops << "|" << eops << ")";
 		std::cout << std::endl;
 		for (size_t t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
@@ -259,24 +265,20 @@ public:
 	}
 
 	friend std::ostream& operator <<(std::ostream& out, const statistic& stat) {
-		auto size = stat.data.size();
-		out.write(reinterpret_cast<char*>(&size), sizeof(size));
-		for (const episode& rec : stat.data) out << rec;
+		for (const episode& rec : stat.data) out << rec << std::endl;
 		return out;
 	}
 
 	friend std::istream& operator >>(std::istream& in, statistic& stat) {
-		auto size = stat.data.size();
-		in.read(reinterpret_cast<char*>(&size), sizeof(size));
-		stat.total = stat.block = stat.limit = stat.count = size;
-		stat.data.resize(size);
-		for (episode& rec : stat.data) in >> rec;
+		for (std::string line; std::getline(in, line) && line.size(); ) {
+			stat.data.emplace_back();
+			std::stringstream(line) >> stat.data.back();
+		}
+		stat.total = stat.block = stat.limit = stat.count = stat.data.size();
 		return in;
 	}
 
 private:
-	static constexpr bool high_resolution_timestamp() { return true; }
-
 	size_t total;
 	size_t block;
 	size_t limit;

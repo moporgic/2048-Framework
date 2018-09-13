@@ -90,7 +90,7 @@ int main(int argc, const char* argv[]) {
 
 	if (save.size()) {
 		std::ofstream out;
-		out.open(save.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+		out.open(save.c_str(), std::ios::out | std::ios::trunc); // TODO
 		if (!out.is_open()) return -1;
 		out << stat;
 		out.flush();
