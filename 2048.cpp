@@ -1,6 +1,6 @@
 /**
  * Basic Environment for Game 2048
- * use 'g++ -std=c++0x -O3 -g -o 2048 2048.cpp' to compile the source
+ * use 'g++ -std=c++11 -O3 -g -o 2048 2048.cpp' to compile the source
  *
  * Computer Games and Intelligence (CGI) Lab, NCTU, Taiwan
  * http://www.aigames.nctu.edu.tw
@@ -19,6 +19,7 @@
 #include "board.h"
 #include "action.h"
 #include "agent.h"
+#include "episode.h"
 #include "statistic.h"
 
 int main(int argc, const char* argv[]) {
@@ -54,10 +55,8 @@ int main(int argc, const char* argv[]) {
 	statistic stat(total, block, limit);
 
 	if (load.size()) {
-		std::ifstream in;
-		in.open(load.c_str(), std::ios::in | std::ios::binary);
-		if (!in.is_open()) return -1;
-		in >> stat;
+		std::ifstream in(load, std::ios::in);
+		if (!(in >> stat)) return -1;
 		in.close();
 	}
 
@@ -69,15 +68,14 @@ int main(int argc, const char* argv[]) {
 		evil.open_episode(play.name() + ":~");
 
 		stat.open_episode(play.name() + ":" + evil.name());
-		board game = stat.make_empty_board();
+		episode& game = stat.back();
 		while (true) {
-			agent& who = stat.take_turns(play, evil);
-			action move = who.take_action(game);
-			if (move.apply(game) == -1) break;
-			stat.save_action(move);
-			if (who.check_for_win(game)) break;
+			agent& who = game.take_turns(play, evil);
+			action move = who.take_action(game.state());
+			if (game.apply_action(move) != true) break;
+			if (who.check_for_win(game.state())) break;
 		}
-		agent& win = stat.last_turns(play, evil);
+		agent& win = game.last_turns(play, evil);
 		stat.close_episode(win.name());
 
 		play.close_episode(win.name());
@@ -89,10 +87,8 @@ int main(int argc, const char* argv[]) {
 	}
 
 	if (save.size()) {
-		std::ofstream out;
-		out.open(save.c_str(), std::ios::out | std::ios::trunc); // TODO
-		if (!out.is_open()) return -1;
-		out << stat;
+		std::ofstream out(save, std::ios::out | std::ios::trunc);
+		if (!(out << stat)) return -1;
 		out.flush();
 		out.close();
 	}

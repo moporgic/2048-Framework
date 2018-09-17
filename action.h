@@ -5,75 +5,110 @@
 class action {
 public:
 	action(const action& act) : code(act) {}
-	action(const int& op = -1) : code(op) {}
-	operator int() const { return code; }
+	action(unsigned op = -1u) : code(op) {}
+	operator unsigned() const { return code; }
+
+public:
+	enum type : unsigned {
+		type_slide = 'p' << 16,
+		type_place = 'e' << 16,
+
+		type_mask  = -1u << 16
+	};
+
+public:
+	/**
+	 * apply this action to a given board
+	 */
+	int apply(board& b) const {
+		unsigned label = code & type_mask;
+		unsigned value = code & ~type_mask;
+		switch (label) {
+		case type_slide: // player action (slide up, right, down, left)
+			return b.slide(value);
+		case type_place: // environment action (place a new tile)
+			return b.place(value & 0x0f, value >> 4);
+		default:
+			return -1;
+		}
+	}
+
+	/**
+	 * get the name of this action
+	 */
+	std::string name() const {
+		std::string opname[] = { "up", "right", "down", "left", "illegal" };
+		unsigned label = code & type_mask;
+		unsigned value = code & ~type_mask;
+		switch (label) {
+		case type_slide: // player action (slide up, right, down, left)
+			return "slide " + opname[std::min(unsigned(value), 4u)];
+		case type_place: // environment action (place a new tile)
+			return "place " + std::to_string(value >> 4) + "-index at position " + std::to_string(value & 0x0f);
+		default:
+			return "null";
+		}
+	}
+
+	/**
+	 * create a sliding action with opcode
+	 * 0=UP, 1=RIGHT, 2=DOWN, 3=LEFT
+	 */
+	static action slide(int oper) {
+		return action(type_slide | (oper % 4));
+	}
+	/**
+	 * create a placing action with position and tile
+	 * 0 <= position < 16, tile should be in index form
+	 */
+	static action place(int pos, int tile) {
+		return action(type_place | (pos & 0x0f) | (tile % 36 << 4));
+	}
 
 public:
 	action& operator =(const action& a) { code = a; return *this; }
-	bool operator ==(const action& a) const { return code == int(a); }
-	bool operator < (const action& a) const { return code <  int(a); }
+	bool operator ==(const action& a) const { return code == a.code; }
+	bool operator < (const action& a) const { return code <  a.code; }
 	bool operator !=(const action& a) const { return !(*this == a); }
 	bool operator > (const action& a) const { return a < *this; }
 	bool operator <=(const action& a) const { return !(a < *this); }
 	bool operator >=(const action& a) const { return !(*this < a); }
 
 public:
-
-	int apply(board& b) const {
-		if ((0b11 & code) == (code)) {
-			// player action (slide up, right, down, left)
-			return b.slide(code);
-		} else if (b(code & 0x0f) == 0) {
-			// environment action (place a new tile)
-			b(code & 0x0f) = (code >> 4);
-			return 0;
-		}
-		return -1;
-	}
-
-	std::string name() const {
-		if ((0b11 & code) == (code)) {
-			std::string opname[] = { "up", "right", "down", "left" };
-			return "slide " + opname[code];
-		} else {
-			return "place " + std::to_string(code >> 4) + "-index at position " + std::to_string(code & 0x0f);
-		}
-		return "null";
-	}
-
-	static action slide(const int& oper) {
-		return action(oper);
-	}
-	static action place(const int& tile, const int& pos) {
-		return action((tile << 4) | (pos));
-	}
-
-public:
 	friend std::ostream& operator <<(std::ostream& out, const action& a) {
-		if ((0b11 & a.code) == (a.code)) {
-			return out << '#' << ("URDL")[a.code];
-		} else {
-			const char* idx = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-			return out << idx[a.code & 0x0f] << idx[(a.code >> 4) % 36];
+		const char* idx = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		unsigned label = unsigned(a) & type_mask;
+		unsigned value = unsigned(a) & ~type_mask;
+		switch (label) {
+		case type_slide: // player action (slide up, right, down, left)
+			return out << '#' << ("URDL")[value];
+		case type_place: // environment action (place a new tile)
+			return out << idx[value & 0x0f] << idx[value >> 4];
+		default:
+			return out << "??";
 		}
-		return out;
 	}
 	friend std::istream& operator >>(std::istream& in, action& a) {
 		char v;
-		in >> v;
-		if (v == '#') {
-			in >> v;
-			const char* idx = "URDL";
-			a.code = std::find(idx, idx + 4, v) - idx;
-		} else {
+		if (in.peek() == '#') {
+			const char* opc = "URDL";
+			in.ignore(1) >> v;
+			unsigned op = std::find(opc, opc + 4, v) - opc;
+			a = action::slide(op);
+		} else if (in.peek() != '?') {
 			const char* idx = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-			a.code = std::find(idx, idx + 36, v) - idx;
 			in >> v;
-			a.code |= (std::find(idx, idx + 36, v) - idx) << 4;
+			unsigned pos = std::find(idx, idx + 36, v) - idx;
+			in >> v;
+			unsigned tile = std::find(idx, idx + 36, v) - idx;
+			a = action::place(pos, tile);
+		} else {
+			in.ignore(2);
+			in.setstate(std::ios_base::failbit);
 		}
 		return in;
 	}
 
 private:
-	int code;
+	unsigned code;
 };

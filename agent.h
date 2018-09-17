@@ -41,56 +41,61 @@ protected:
 	std::map<key, value> meta;
 };
 
-/**
- * evil (environment agent)
- * add a new random tile on board, or do nothing if the board is full
- * 2-tile: 90%
- * 4-tile: 10%
- */
-class rndenv : public agent {
+class random_agent : public agent {
 public:
-	rndenv(const std::string& args = "") : agent("name=rndenv " + args) {
+	random_agent(const std::string& args = "") : agent(args) {
 		if (meta.find("seed") != meta.end())
 			engine.seed(int(meta["seed"]));
 	}
+	virtual ~random_agent() {}
 
-	virtual action take_action(const board& after) {
-		int space[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-		std::shuffle(space, space + 16, engine);
-		for (int pos : space) {
-			if (after(pos) != 0) continue;
-			std::uniform_int_distribution<int> popup(0, 9);
-			int tile = popup(engine) ? 1 : 2;
-			return action::place(tile, pos);
-		}
-		return action();
-	}
-
-private:
+protected:
 	std::default_random_engine engine;
 };
 
 /**
- * player (dummy)
- * select an action randomly
+ * random environment
+ * add a new random tile to an empty cell
+ * 2-tile: 90%
+ * 4-tile: 10%
  */
-class player : public agent {
+class rndenv : public random_agent {
 public:
-	player(const std::string& args = "") : agent("name=player " + args) {
-		if (meta.find("seed") != meta.end())
-			engine.seed(int(meta["seed"]));
-	}
+	rndenv(const std::string& args = "") : random_agent("name=random role=environment " + args),
+		space({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }), popup(0, 9) {}
 
-	virtual action take_action(const board& before) {
-		int opcode[] = { 0, 1, 2, 3 };
-		std::shuffle(opcode, opcode + 4, engine);
-		for (int op : opcode) {
-			board b = before;
-			if (b.slide(op) != -1) return action::slide(op);
+	virtual action take_action(const board& after) {
+		std::shuffle(space.begin(), space.end(), engine);
+		for (int pos : space) {
+			if (after(pos) != 0) continue;
+			int tile = popup(engine) ? 1 : 2;
+			return action::place(pos, tile);
 		}
 		return action();
 	}
 
 private:
-	std::default_random_engine engine;
+	std::array<int, 16> space;
+	std::uniform_int_distribution<int> popup;
+};
+
+/**
+ * dummy player
+ * select a legal action randomly
+ */
+class player : public random_agent {
+public:
+	player(const std::string& args = "") : random_agent("name=dummy role=player " + args),
+		opcode({ 0, 1, 2, 3 }) {}
+
+	virtual action take_action(const board& before) {
+		std::shuffle(opcode.begin(), opcode.end(), engine);
+		for (int op : opcode) {
+			if (board(before).slide(op) != -1) return action::slide(op);
+		}
+		return action();
+	}
+
+private:
+	std::array<int, 4> opcode;
 };

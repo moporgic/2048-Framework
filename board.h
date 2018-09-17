@@ -1,16 +1,10 @@
 #pragma once
 #include <array>
 #include <iostream>
-#include <cstdio>
+#include <iomanip>
 
 /**
  * array-based board for 2048
- *
- * index (2-d form):
- * [0][0] [0][1] [0][2] [0][3]
- * [1][0] [1][1] [1][2] [1][3]
- * [2][0] [2][1] [2][2] [2][3]
- * [3][0] [3][1] [3][2] [3][3]
  *
  * index (1-d form):
  *  (0)  (1)  (2)  (3)
@@ -26,10 +20,10 @@ public:
 	board(const board& b) = default;
 	board& operator =(const board& b) = default;
 
-	std::array<int, 4>& operator [](const int& i) { return tile[i]; }
-	const std::array<int, 4>& operator [](const int& i) const { return tile[i]; }
-	int& operator ()(const int& i) { return tile[i / 4][i % 4]; }
-	const int& operator ()(const int& i) const { return tile[i / 4][i % 4]; }
+	std::array<int, 4>& operator [](int i) { return tile[i]; }
+	const std::array<int, 4>& operator [](int i) const { return tile[i]; }
+	int& operator ()(int i) { return tile[i / 4][i % 4]; }
+	const int& operator ()(int i) const { return tile[i / 4][i % 4]; }
 
 public:
 	bool operator ==(const board& b) const { return tile == b.tile; }
@@ -40,11 +34,23 @@ public:
 	bool operator >=(const board& b) const { return !(*this < b); }
 
 public:
+
+	/**
+	 * place a tile (index value) to the specific position (1-d form index)
+	 * return 0 if the action is valid, or -1 if not
+	 */
+	int place(unsigned pos, unsigned tile) {
+		if (pos >= 16) return -1;
+		if (tile != 1 && tile != 2) return -1;
+		operator()(pos) = tile;
+		return 0;
+	}
+
 	/**
 	 * apply an action to the board
-	 * return the reward gained by the action, or -1 if the action is illegal
+	 * return the reward of the action, or -1 if the action is illegal
 	 */
-	int slide(const int& opcode) {
+	int slide(unsigned opcode) {
 		switch (opcode) {
 		case 0: return slide_up();
 		case 1: return slide_right();
@@ -125,7 +131,7 @@ public:
 	/**
 	 * rotate the board clockwise by given times
 	 */
-	void rotate(const int& r = 1) {
+	void rotate(int r = 1) {
 		switch (((r % 4) + 4) % 4) {
 		default:
 		case 0: break;
@@ -141,15 +147,11 @@ public:
 
 public:
     friend std::ostream& operator <<(std::ostream& out, const board& b) {
-		char buff[32];
 		out << "+------------------------+" << std::endl;
-		for (int r = 0; r < 4; r++) {
-			std::snprintf(buff, sizeof(buff), "|%6u%6u%6u%6u|",
-				(1 << b[r][0]) & -2u, // use -2u (0xff...fe) to remove the unnecessary 1 for (1 << 0)
-				(1 << b[r][1]) & -2u,
-				(1 << b[r][2]) & -2u,
-				(1 << b[r][3]) & -2u);
-			out << buff << std::endl;
+		for (auto& row : b.tile) {
+			out << "|" << std::dec;
+			for (auto t : row) out << std::setw(6) << ((1 << t) & -2u);
+			out << "|" << std::endl;
 		}
 		out << "+------------------------+" << std::endl;
 		return out;
