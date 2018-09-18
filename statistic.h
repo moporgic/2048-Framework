@@ -67,8 +67,8 @@ public:
 		std::cout << count << "\t";
 		std::cout << "avg = " << (sum / blk) << ", ";
 		std::cout << "max = " << (max) << ", ";
-		std::cout << "ops = " << (sop * 1000 / sdu);
-		std::cout << " (" << (pop * 1000 / pdu) << "|" << (eop * 1000 / edu) << ")";
+		std::cout << "ops = " << (sop * 1000.0 / sdu);
+		std::cout << " (" << (pop * 1000.0 / pdu) << "|" << (eop * 1000.0 / edu) << ")";
 		std::cout << std::endl;
 		for (size_t t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
