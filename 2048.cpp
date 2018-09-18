@@ -7,15 +7,9 @@
  */
 
 #include <iostream>
-#include <algorithm>
-#include <functional>
+#include <fstream>
 #include <iterator>
 #include <string>
-#include <random>
-#include <sstream>
-#include <fstream>
-#include <cmath>
-#include <chrono>
 #include "board.h"
 #include "action.h"
 #include "agent.h"
