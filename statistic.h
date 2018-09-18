@@ -119,8 +119,12 @@ public:
 	}
 	friend std::istream& operator >>(std::istream& in, statistic& stat) {
 		for (std::string line; std::getline(in, line) && line.size(); ) {
-			stat.data.emplace_back();
-			std::stringstream(line) >> stat.data.back();
+			episode ep;
+			if (std::stringstream(line) >> ep) {
+				stat.data.push_back(ep);
+			} else {
+				in.setstate(std::ios_base::failbit);
+			}
 		}
 		stat.total = std::max(stat.total, stat.data.size());
 		stat.count = stat.data.size();

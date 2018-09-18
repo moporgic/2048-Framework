@@ -56,7 +56,7 @@ int main(int argc, const char* argv[]) {
 
 	if (load.size()) {
 		std::ifstream in(load, std::ios::in);
-		if (!(in >> stat)) return -1;
+		in >> stat;
 		in.close();
 	}
 
@@ -88,8 +88,7 @@ int main(int argc, const char* argv[]) {
 
 	if (save.size()) {
 		std::ofstream out(save, std::ios::out | std::ios::trunc);
-		if (!(out << stat)) return -1;
-		out.flush();
+		out << stat;
 		out.close();
 	}
 

@@ -97,14 +97,21 @@ public:
 		return out;
 	}
 	friend std::istream& operator >>(std::istream& in, episode& ep) {
+		ep.ep_state = initial_state();
+		ep.ep_score = 0;
 		std::string token;
 		std::getline(in, token, '|');
 		std::stringstream(token) >> ep.ep_open;
 		std::getline(in, token, '|');
 		static const std::regex pattern("[#@$%0-9A-F][#@$%0-9A-F](\\([0-9]+\\))?");
 		for (std::smatch match; std::regex_search(token, match, pattern); token = match.suffix()) {
-			ep.ep_moves.emplace_back();
-			std::stringstream(match.str()) >> ep.ep_moves.back();
+			move mv;
+			if (std::stringstream(match.str()) >> mv) {
+				ep.ep_moves.push_back(mv);
+				ep.apply_action(mv);
+			} else {
+				in.setstate(std::ios_base::failbit);
+			}
 		}
 		std::getline(in, token, '|');
 		std::stringstream(token) >> ep.ep_close;
