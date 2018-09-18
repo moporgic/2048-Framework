@@ -58,6 +58,7 @@ int main(int argc, const char* argv[]) {
 		std::ifstream in(load, std::ios::in);
 		in >> stat;
 		in.close();
+		summary |= stat.is_finished();
 	}
 
 	player play(play_args);

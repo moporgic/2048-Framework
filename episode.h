@@ -6,7 +6,6 @@
 #include <sstream>
 #include <chrono>
 #include <numeric>
-#include <regex>
 #include "board.h"
 #include "action.h"
 #include "agent.h"
@@ -97,21 +96,16 @@ public:
 		return out;
 	}
 	friend std::istream& operator >>(std::istream& in, episode& ep) {
-		ep.ep_state = initial_state();
-		ep.ep_score = 0;
+		ep = {};
 		std::string token;
 		std::getline(in, token, '|');
 		std::stringstream(token) >> ep.ep_open;
 		std::getline(in, token, '|');
-		static const std::regex pattern("[#@$%0-9A-F][#@$%0-9A-F](\\([0-9]+\\))?");
-		for (std::smatch match; std::regex_search(token, match, pattern); token = match.suffix()) {
-			move mv;
-			if (std::stringstream(match.str()) >> mv) {
-				ep.ep_moves.push_back(mv);
-				ep.apply_action(mv);
-			} else {
-				in.setstate(std::ios_base::failbit);
-			}
+		std::stringstream moves(token);
+		for (bool next = token.size(); next; next = bool(moves)) {
+			ep.ep_moves.emplace_back();
+			moves >> ep.ep_moves.back();
+			ep.ep_score += action(ep.ep_moves.back()).apply(ep.ep_state);
 		}
 		std::getline(in, token, '|');
 		std::stringstream(token) >> ep.ep_close;
@@ -124,7 +118,7 @@ protected:
 		action code;
 		int reward;
 		time_t time;
-		move(action code = 0, int reward = 0, time_t time = 0) : code(code), reward(reward), time(time) {}
+		move(action code = {}, int reward = 0, time_t time = 0) : code(code), reward(reward), time(time) {}
 
 		operator action() const { return code; }
 		friend std::ostream& operator <<(std::ostream& out, const move& m) {
