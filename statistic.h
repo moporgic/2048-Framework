@@ -64,6 +64,9 @@ public:
 			pdu += ep.time(action::slide::type);
 			edu += ep.time(action::place::type);
 		}
+		std::ios ff(nullptr);
+		ff.copyfmt(std::cout);
+		std::cout << std::fixed << std::setprecision(0);
 		std::cout << count << "\t";
 		std::cout << "avg = " << (sum / blk) << ", ";
 		std::cout << "max = " << (max) << ", ";
@@ -71,6 +74,7 @@ public:
 		std::cout <<     " (" << (pop * 1000.0 / pdu);
 		std::cout <<      "|" << (eop * 1000.0 / edu) << ")";
 		std::cout << std::endl;
+		std::cout.copyfmt(ff);
 		for (size_t t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
 			unsigned accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
