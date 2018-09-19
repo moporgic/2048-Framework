@@ -58,23 +58,26 @@ public:
 			max = std::max(ep.score(), max);
 			stat[*std::max_element(&(ep.state()(0)), &(ep.state()(16)))]++;
 			sop += ep.step();
-			pop += ep.step(action::type_slide);
-			eop += ep.step(action::type_place);
+			pop += ep.step(action::slide::type);
+			eop += ep.step(action::place::type);
 			sdu += ep.time();
-			pdu += ep.time(action::type_slide);
-			edu += ep.time(action::type_place);
+			pdu += ep.time(action::slide::type);
+			edu += ep.time(action::place::type);
 		}
 		std::cout << count << "\t";
 		std::cout << "avg = " << (sum / blk) << ", ";
 		std::cout << "max = " << (max) << ", ";
 		std::cout << "ops = " << (sop * 1000.0 / sdu);
-		std::cout << " (" << (pop * 1000.0 / pdu) << "|" << (eop * 1000.0 / edu) << ")";
+		std::cout <<     " (" << (pop * 1000.0 / pdu);
+		std::cout <<      "|" << (eop * 1000.0 / edu) << ")";
 		std::cout << std::endl;
 		for (size_t t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
 			unsigned accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
-			std::cout << "\t" << ((1 << t) & -2u) << "\t" << (accu * 100.0 / blk) << "%";
-			std::cout << "\t(" << (stat[t] * 100.0 / blk) << "%)" << std::endl;
+			std::cout << "\t" << ((1 << t) & -2u); // type
+			std::cout << "\t" << (accu * 100.0 / blk) << "%"; // win rate
+			std::cout << "\t" "(" << (stat[t] * 100.0 / blk) << "%" ")"; // percentage of ending
+			std::cout << std::endl;
 		}
 		std::cout << std::endl;
 	}

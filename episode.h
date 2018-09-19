@@ -44,23 +44,23 @@ public:
 	}
 
 public:
-	size_t step(int who = action::type_slide | action::type_place) const {
+	size_t step(unsigned who = action::slide::type | action::place::type) const {
 		int size = ep_moves.size(); // 'int' is important for handling 0
 		switch (who) {
-		case action::type_slide: return (size - 1) / 2;
-		case action::type_place: return (size - (size - 1) / 2);
-		default:                 return size;
+		case action::slide::type: return (size - 1) / 2;
+		case action::place::type: return (size - (size - 1) / 2);
+		default:                  return size;
 		}
 	}
 
-	time_t time(int who = action::type_slide | action::type_place) const {
+	time_t time(unsigned who = action::slide::type | action::place::type) const {
 		time_t time = 0;
 		size_t i = 2;
 		switch (who) {
-		case action::type_place:
+		case action::place::type:
 			if (ep_moves.size()) time += ep_moves[0].time, i = 1;
 			// no break;
-		case action::type_slide:
+		case action::slide::type:
 			while (i < ep_moves.size()) time += ep_moves[i].time, i += 2;
 			break;
 		default:
@@ -70,18 +70,18 @@ public:
 		return time;
 	}
 
-	std::vector<action> actions(int who = action::type_slide | action::type_place) const {
+	std::vector<action> actions(unsigned who = action::slide::type | action::place::type) const {
 		std::vector<action> res;
 		size_t i = 2;
 		switch (who) {
-		case action::type_place:
+		case action::place::type:
 			if (ep_moves.size()) res.push_back(ep_moves[0]), i = 1;
 			// no break;
-		case action::type_slide:
+		case action::slide::type:
 			while (i < ep_moves.size()) res.push_back(ep_moves[i]), i += 2;
 			break;
 		default:
-			res = { ep_moves.begin(), ep_moves.end() };
+			res.assign(ep_moves.begin(), ep_moves.end());
 			break;
 		}
 		return res;
