@@ -7,7 +7,6 @@ class action {
 public:
 	action(unsigned code = -1u) : code(code) {}
 	action(const action& a) : code(a.code) {}
-
 	class slide;
 	class place;
 
@@ -17,14 +16,10 @@ public:
 	std::ostream& operator >>(std::ostream& out) const;
 	std::istream& operator <<(std::istream& in);
 
-protected:
-	static constexpr unsigned type_offset = 24;
-	static constexpr unsigned type_mask = -1u << type_offset;
-
 public:
 	operator unsigned() const { return code; }
-	unsigned type() const { return code & type_mask; }
-	unsigned event() const { return code & ~type_mask; }
+	unsigned type() const { return code & type_flag(-1u); }
+	unsigned event() const { return code & ~type(); }
 	template<class alias> alias& cast() const { return reinterpret_cast<alias&>(const_cast<action&>(*this)); }
 
 	action& operator =(const action& a) { code = a; return *this; }
@@ -38,6 +33,7 @@ public:
 	friend std::istream& operator >>(std::istream& in, action& a) { return a << in; }
 
 protected:
+	static constexpr unsigned type_flag(unsigned v) { return v << 24; }
 	unsigned code;
 };
 
@@ -48,7 +44,7 @@ protected:
  */
 class action::slide : public action {
 public:
-	static constexpr unsigned type = 's' << type_offset;
+	static constexpr unsigned type = type_flag('s');
 	slide(unsigned oper) : action(slide::type | (oper % 4)) {}
 	slide(const action& a) : action(a) {}
 
@@ -84,7 +80,7 @@ public:
  */
 class action::place : public action {
 public:
-	static constexpr unsigned type = 'p' << type_offset;
+	static constexpr unsigned type = type_flag('p');
 	place(unsigned pos, unsigned tile) : action(place::type | (pos & 0x0f) | (tile % 36 << 4)) {}
 	place(const action& a) : action(a) {}
 	unsigned position() const { return event() & 0x0f; }
