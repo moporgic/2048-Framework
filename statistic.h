@@ -46,7 +46,7 @@ public:
 	 *  '93.7%': 93.7% (937 games) reached 8192-tiles (a.k.a. win rate of 8192-tile)
 	 *  '22.4%': 22.4% (224 games) terminated with 8192-tiles (the largest)
 	 */
-	void show() const {
+	void show(bool tstat = true) const {
 		size_t blk = std::min(data.size(), block);
 		unsigned sum = 0, max = 0, stat[64] = { 0 };
 		size_t sop = 0, pop = 0, eop = 0;
@@ -64,6 +64,7 @@ public:
 			pdu += ep.time(action::slide::type);
 			edu += ep.time(action::place::type);
 		}
+
 		std::ios ff(nullptr);
 		ff.copyfmt(std::cout);
 		std::cout << std::fixed << std::setprecision(0);
@@ -75,6 +76,8 @@ public:
 		std::cout <<      "|" << (eop * 1000.0 / edu) << ")";
 		std::cout << std::endl;
 		std::cout.copyfmt(ff);
+
+		if (!tstat) return;
 		for (size_t t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
 			unsigned accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
