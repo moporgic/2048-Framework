@@ -11,8 +11,8 @@ public:
 	class place;
 
 public:
-	inline int apply(board& b) const;
-	inline std::string name() const;
+	int apply(board& b) const;
+	std::string name() const;
 	std::ostream& operator >>(std::ostream& out) const;
 	std::istream& operator <<(std::istream& in);
 
@@ -21,14 +21,6 @@ public:
 	unsigned type() const { return code & type_flag(-1u); }
 	unsigned event() const { return code & ~type(); }
 	template<class alias> alias& cast() const { return reinterpret_cast<alias&>(const_cast<action&>(*this)); }
-
-	action& operator =(const action& a) { code = a; return *this; }
-	bool operator ==(const action& a) const { return code == a.code; }
-	bool operator < (const action& a) const { return code <  a.code; }
-	bool operator !=(const action& a) const { return !(*this == a); }
-	bool operator > (const action& a) const { return a < *this; }
-	bool operator <=(const action& a) const { return !(a < *this); }
-	bool operator >=(const action& a) const { return !(*this < a); }
 	friend std::ostream& operator <<(std::ostream& out, const action& a) { return a >> out; }
 	friend std::istream& operator >>(std::istream& in, action& a) { return a << in; }
 
