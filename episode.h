@@ -101,8 +101,7 @@ public:
 		std::getline(in, token, '|');
 		std::stringstream(token) >> ep.ep_open;
 		std::getline(in, token, '|');
-		std::stringstream moves(token);
-		for (bool next = token.size(); next; next = bool(moves)) {
+		for (std::stringstream moves(token); !moves.eof(); moves.peek()) {
 			ep.ep_moves.emplace_back();
 			moves >> ep.ep_moves.back();
 			ep.ep_score += action(ep.ep_moves.back()).apply(ep.ep_state);
