@@ -19,8 +19,8 @@ public:
 	 */
 	statistic(size_t total, size_t block = 0, size_t limit = 0)
 		: total(total),
-		  block(block ? block : this->total),
-		  limit(std::max(limit, this->block)),
+		  block(block ? block : total),
+		  limit(limit ? limit : total),
 		  count(0) {}
 
 public:
