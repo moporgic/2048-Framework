@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <unordered_map>
 #include <string>
 #include "board.h"
 
@@ -7,86 +8,93 @@ class action {
 public:
 	action(unsigned code = -1u) : code(code) {}
 	action(const action& a) : code(a.code) {}
-	class slide;
-	class place;
+	virtual ~action() {}
+
+	class slide; // create a sliding action with board opcode
+	class place; // create a placing action with position and tile
 
 public:
-	int apply(board& b) const;
-	std::string name() const;
-	std::ostream& operator >>(std::ostream& out) const;
-	std::istream& operator <<(std::istream& in);
+	virtual int apply(board& b) const {
+		auto proto = entries().find(type());
+		if (proto != entries().end()) return proto->second->reinterpret(this).apply(b);
+		return -1;
+	}
+	virtual std::ostream& operator >>(std::ostream& out) const {
+		auto proto = entries().find(type());
+		if (proto != entries().end()) return proto->second->reinterpret(this) >> out;
+		return out << "??";
+	}
+	virtual std::istream& operator <<(std::istream& in) {
+		auto state = in.rdstate();
+		for (auto proto = entries().begin(); proto != entries().end(); proto++) {
+			if (proto->second->reinterpret(this) << in) return in;
+			in.clear(state);
+		}
+		return in.ignore(2);
+	}
 
 public:
 	operator unsigned() const { return code; }
 	unsigned type() const { return code & type_flag(-1u); }
 	unsigned event() const { return code & ~type(); }
-	template<class alias> alias& cast() const { return reinterpret_cast<alias&>(const_cast<action&>(*this)); }
 	friend std::ostream& operator <<(std::ostream& out, const action& a) { return a >> out; }
 	friend std::istream& operator >>(std::istream& in, action& a) { return a << in; }
 
 protected:
 	static constexpr unsigned type_flag(unsigned v) { return v << 24; }
+
+	typedef std::unordered_map<unsigned, action*> prototype;
+	static prototype& entries() { static prototype m; return m; }
+	virtual action& reinterpret(const action* a) const { return *new (const_cast<action*>(a)) action(*a); }
+
 	unsigned code;
 };
 
-
-/**
- * create a sliding action with opcode
- * 0=UP, 1=RIGHT, 2=DOWN, 3=LEFT
- */
 class action::slide : public action {
 public:
 	static constexpr unsigned type = type_flag('s');
-	slide(unsigned oper) : action(slide::type | (oper % 4)) {}
-	slide(const action& a) : action(a) {}
-
+	slide(unsigned oper) : action(slide::type | (oper & 0b11)) {}
+	slide(const action& a = {}) : action(a) {}
+public:
 	int apply(board& b) const {
 		return b.slide(event());
 	}
-	std::string name() const {
-		std::string data[] = { "up", "right", "down", "left", "illegal" };
-		return "slide " + data[std::min(event(), 4u)];
-	}
 	std::ostream& operator >>(std::ostream& out) const {
-		return out << '#' << ("URDL?")[std::min(event(), 4u)];
+		return out << '#' << ("URDL")[event() & 0b11];
 	}
 	std::istream& operator <<(std::istream& in) {
 		if (in.peek() == '#') {
-			const char* opc = "URDL";
 			char v;
 			in.ignore(1) >> v;
-			unsigned op = std::find(opc, opc + 4, v) - opc;
-			if (op < 4) {
-				operator= (action::slide(op));
+			const char* opc = "URDL";
+			unsigned oper = std::find(opc, opc + 4, v) - opc;
+			if (oper < 4) {
+				operator= (action::slide(oper));
 				return in;
 			}
 		}
 		in.setstate(std::ios::failbit);
 		return in;
 	}
+protected:
+	action& reinterpret(const action* a) const { return *new (const_cast<action*>(a)) slide(*a); }
+	static __attribute__((constructor)) void init() { entries()[type_flag('s')] = new slide; }
 };
 
-/**
- * create a placing action with position and tile
- * 0 <= position < 16, tile should be in index form
- */
 class action::place : public action {
 public:
 	static constexpr unsigned type = type_flag('p');
-	place(unsigned pos, unsigned tile) : action(place::type | (pos & 0x0f) | (tile % 36 << 4)) {}
-	place(const action& a) : action(a) {}
+	place(unsigned pos, unsigned tile) : action(place::type | (pos & 0x0f) | (std::min(tile, 35u) << 4)) {}
+	place(const action& a = {}) : action(a) {}
 	unsigned position() const { return event() & 0x0f; }
 	unsigned tile() const { return event() >> 4; }
-
+public:
 	int apply(board& b) const {
 		return b.place(position(), tile());
 	}
-	std::string name() const {
-		return "place " + std::to_string(tile()) + "-index at position " + std::to_string(position());
-	}
 	std::ostream& operator >>(std::ostream& out) const {
-		const char* idx = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		return out << idx[position()] << idx[std::min(tile(), 35u)];
+		const char* idx = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ?";
+		return out << idx[position()] << idx[std::min(tile(), 36u)];
 	}
 	std::istream& operator <<(std::istream& in) {
 		const char* idx = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -95,50 +103,15 @@ public:
 		if (pos < 16) {
 			in.ignore(1) >> v;
 			unsigned tile = std::find(idx, idx + 36, v) - idx;
-			operator =(action::place(pos, tile));
-			return in;
+			if (tile < 36) {
+				operator =(action::place(pos, tile));
+				return in;
+			}
 		}
-		in.setstate(std::ios_base::failbit);
+		in.setstate(std::ios::failbit);
 		return in;
 	}
+protected:
+	action& reinterpret(const action* a) const { return *new (const_cast<action*>(a)) place(*a); }
+	static __attribute__((constructor)) void init() { entries()[type_flag('p')] = new place; }
 };
-
-
-int action::apply(board& b) const {
-	switch (type()) {
-	case slide::type:
-		return cast<slide>().apply(b);
-	case place::type:
-		return cast<place>().apply(b);
-	default:
-		return -1;
-	}
-}
-std::string action::name() const {
-	switch (type()) {
-	case slide::type:
-		return cast<slide>().name();
-	case place::type:
-		return cast<place>().name();
-	default:
-		return "unknown";
-	}
-}
-std::ostream& action::operator >>(std::ostream& out) const {
-	switch (type()) {
-	case slide::type:
-		return cast<slide>() >> out;
-	case place::type:
-		return cast<place>() >> out;
-	default:
-		return out << "??";
-	}
-}
-std::istream& action::operator <<(std::istream& in) {
-	if (cast<slide>() << in) return in;
-	in.clear();
-	if (cast<place>() << in) return in;
-	in.clear();
-	in.ignore(2).setstate(std::ios_base::failbit);
-	return in;
-}
