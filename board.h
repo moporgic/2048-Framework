@@ -51,7 +51,7 @@ public:
 	 * return the reward of the action, or -1 if the action is illegal
 	 */
 	int slide(unsigned opcode) {
-		switch (opcode) {
+		switch (opcode & 0b11) {
 		case 0: return slide_up();
 		case 1: return slide_right();
 		case 2: return slide_down();
