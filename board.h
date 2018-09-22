@@ -14,16 +14,23 @@
  *
  */
 class board {
+public:
+	typedef unsigned cell;
+	typedef std::array<cell, 4> row;
+	typedef std::array<row, 4> grid;
 
 public:
 	board() : tile() {}
+	board(const grid& b) : tile(b) {}
 	board(const board& b) = default;
 	board& operator =(const board& b) = default;
 
-	std::array<int, 4>& operator [](int i) { return tile[i]; }
-	const std::array<int, 4>& operator [](int i) const { return tile[i]; }
-	int& operator ()(int i) { return tile[i / 4][i % 4]; }
-	const int& operator ()(int i) const { return tile[i / 4][i % 4]; }
+	operator grid&() { return tile; }
+	operator const grid&() const { return tile; }
+	row& operator [](unsigned i) { return tile[i]; }
+	const row& operator [](unsigned i) const { return tile[i]; }
+	cell& operator ()(unsigned i) { return tile[i / 4][i % 4]; }
+	const cell& operator ()(unsigned i) const { return tile[i / 4][i % 4]; }
 
 public:
 	bool operator ==(const board& b) const { return tile == b.tile; }
@@ -39,7 +46,7 @@ public:
 	 * place a tile (index value) to the specific position (1-d form index)
 	 * return 0 if the action is valid, or -1 if not
 	 */
-	int place(unsigned pos, unsigned tile) {
+	int place(unsigned pos, cell tile) {
 		if (pos >= 16) return -1;
 		if (tile != 1 && tile != 2) return -1;
 		operator()(pos) = tile;
@@ -146,7 +153,7 @@ public:
 	void reverse() { reflect_horizontal(); reflect_vertical(); }
 
 public:
-    friend std::ostream& operator <<(std::ostream& out, const board& b) {
+	friend std::ostream& operator <<(std::ostream& out, const board& b) {
 		out << "+------------------------+" << std::endl;
 		for (auto& row : b.tile) {
 			out << "|" << std::dec;
@@ -158,5 +165,5 @@ public:
 	}
 
 private:
-    std::array<std::array<int, 4>, 4> tile;
+	grid tile;
 };
