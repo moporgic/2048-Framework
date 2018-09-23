@@ -15,13 +15,14 @@
  */
 class board {
 public:
-	typedef unsigned cell;
+	typedef uint32_t cell;
 	typedef std::array<cell, 4> row;
 	typedef std::array<row, 4> grid;
+	typedef uint64_t data;
 
 public:
-	board() : tile() {}
-	board(const grid& b) : tile(b) {}
+	board() : tile(), latent(0) {}
+	board(const grid& b, data v = 0) : tile(b), latent(v) {}
 	board(const board& b) = default;
 	board& operator =(const board& b) = default;
 
@@ -31,6 +32,9 @@ public:
 	const row& operator [](unsigned i) const { return tile[i]; }
 	cell& operator ()(unsigned i) { return tile[i / 4][i % 4]; }
 	const cell& operator ()(unsigned i) const { return tile[i / 4][i % 4]; }
+
+	data info() const { return latent; }
+	data info(data dat) { data old = latent; latent = dat; return old; }
 
 public:
 	bool operator ==(const board& b) const { return tile == b.tile; }
@@ -166,4 +170,5 @@ public:
 
 private:
 	grid tile;
+	data latent;
 };
