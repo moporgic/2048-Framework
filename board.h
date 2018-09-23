@@ -21,8 +21,8 @@ public:
 	typedef uint64_t data;
 
 public:
-	board() : tile(), latent(0) {}
-	board(const grid& b, data v = 0) : tile(b), latent(v) {}
+	board() : tile(), attr(0) {}
+	board(const grid& b, data v = 0) : tile(b), attr(v) {}
 	board(const board& b) = default;
 	board& operator =(const board& b) = default;
 
@@ -33,8 +33,8 @@ public:
 	cell& operator ()(unsigned i) { return tile[i / 4][i % 4]; }
 	const cell& operator ()(unsigned i) const { return tile[i / 4][i % 4]; }
 
-	data info() const { return latent; }
-	data info(data dat) { data old = latent; latent = dat; return old; }
+	data info() const { return attr; }
+	data info(data dat) { data old = attr; attr = dat; return old; }
 
 public:
 	bool operator ==(const board& b) const { return tile == b.tile; }
@@ -170,5 +170,5 @@ public:
 
 private:
 	grid tile;
-	data latent;
+	data attr;
 };
