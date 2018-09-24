@@ -48,9 +48,10 @@ public:
 	 */
 	void show(bool tstat = true) const {
 		size_t blk = std::min(data.size(), block);
-		unsigned sum = 0, max = 0, stat[64] = { 0 };
+		size_t stat[64] = { 0 };
 		size_t sop = 0, pop = 0, eop = 0;
 		time_t sdu = 0, pdu = 0, edu = 0;
+		board::reward sum = 0, max = 0;
 		auto it = data.end();
 		for (size_t i = 0; i < blk; i++) {
 			auto& ep = *(--it);

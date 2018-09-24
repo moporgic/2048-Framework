@@ -19,6 +19,7 @@ public:
 	typedef std::array<cell, 4> row;
 	typedef std::array<row, 4> grid;
 	typedef uint64_t data;
+	typedef int reward;
 
 public:
 	board() : tile(), attr(0) {}
@@ -50,7 +51,7 @@ public:
 	 * place a tile (index value) to the specific position (1-d form index)
 	 * return 0 if the action is valid, or -1 if not
 	 */
-	int place(unsigned pos, cell tile) {
+	reward place(unsigned pos, cell tile) {
 		if (pos >= 16) return -1;
 		if (tile != 1 && tile != 2) return -1;
 		operator()(pos) = tile;
@@ -61,7 +62,7 @@ public:
 	 * apply an action to the board
 	 * return the reward of the action, or -1 if the action is illegal
 	 */
-	int slide(unsigned opcode) {
+	reward slide(unsigned opcode) {
 		switch (opcode & 0b11) {
 		case 0: return slide_up();
 		case 1: return slide_right();
@@ -71,9 +72,9 @@ public:
 		}
 	}
 
-	int slide_left() {
+	reward slide_left() {
 		board prev = *this;
-		int score = 0;
+		reward score = 0;
 		for (int r = 0; r < 4; r++) {
 			auto& row = tile[r];
 			int top = 0, hold = 0;
@@ -98,21 +99,21 @@ public:
 		}
 		return (*this != prev) ? score : -1;
 	}
-	int slide_right() {
+	reward slide_right() {
 		reflect_horizontal();
-		int score = slide_left();
+		reward score = slide_left();
 		reflect_horizontal();
 		return score;
 	}
-	int slide_up() {
+	reward slide_up() {
 		rotate_right();
-		int score = slide_right();
+		reward score = slide_right();
 		rotate_left();
 		return score;
 	}
-	int slide_down() {
+	reward slide_down() {
 		rotate_right();
-		int score = slide_left();
+		reward score = slide_left();
 		rotate_left();
 		return score;
 	}

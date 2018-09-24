@@ -68,7 +68,7 @@ public:
 		std::shuffle(space.begin(), space.end(), engine);
 		for (int pos : space) {
 			if (after(pos) != 0) continue;
-			int tile = popup(engine) ? 1 : 2;
+			board::cell tile = popup(engine) ? 1 : 2;
 			return action::place(pos, tile);
 		}
 		return action();
@@ -91,7 +91,8 @@ public:
 	virtual action take_action(const board& before) {
 		std::shuffle(opcode.begin(), opcode.end(), engine);
 		for (int op : opcode) {
-			if (board(before).slide(op) != -1) return action::slide(op);
+			board::reward reward = board(before).slide(op);
+			if (reward != -1) return action::slide(op);
 		}
 		return action();
 	}
