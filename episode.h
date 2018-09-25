@@ -44,7 +44,7 @@ public:
 	}
 
 public:
-	size_t step(unsigned who = action::slide::type | action::place::type) const {
+	size_t step(unsigned who = -1u) const {
 		int size = ep_moves.size(); // 'int' is important for handling 0
 		switch (who) {
 		case action::slide::type: return (size - 1) / 2;
@@ -53,7 +53,7 @@ public:
 		}
 	}
 
-	time_t time(unsigned who = action::slide::type | action::place::type) const {
+	time_t time(unsigned who = -1u) const {
 		time_t time = 0;
 		size_t i = 2;
 		switch (who) {
@@ -70,7 +70,7 @@ public:
 		return time;
 	}
 
-	std::vector<action> actions(unsigned who = action::slide::type | action::place::type) const {
+	std::vector<action> actions(unsigned who = -1u) const {
 		std::vector<action> res;
 		size_t i = 2;
 		switch (who) {
