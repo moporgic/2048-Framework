@@ -1,0 +1,3 @@
+The objective of project 4 is to improve the performance of the player.
+Therefore, the framework is the same as the framework of project 2.
+You can merge some search method from project 3, or try some other training techniques.
