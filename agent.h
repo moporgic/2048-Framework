@@ -52,6 +52,9 @@ protected:
 	std::map<key, value> meta;
 };
 
+/**
+ * base agent for agents with randomness
+ */
 class random_agent : public agent {
 public:
 	random_agent(const std::string& args = "") : agent(args) {
@@ -70,21 +73,20 @@ protected:
 class weight_agent : public agent {
 public:
 	weight_agent(const std::string& args = "") : agent(args) {
-		if (meta.find("init") != meta.end()) // pass init=... to initialize the weight
+		if (meta.find("init") != meta.end())
 			init_weights(meta["init"]);
-		if (meta.find("load") != meta.end()) // pass load=... to load from a specific file
+		if (meta.find("load") != meta.end())
 			load_weights(meta["load"]);
 	}
 	virtual ~weight_agent() {
-		if (meta.find("save") != meta.end()) // pass save=... to save to a specific file
+		if (meta.find("save") != meta.end())
 			save_weights(meta["save"]);
 	}
 
 protected:
 	virtual void init_weights(const std::string& info) {
-		net.emplace_back(65536); // create an empty weight table with size 65536
-		net.emplace_back(65536); // create an empty weight table with size 65536
-		// now net.size() == 2; net[0].size() == 65536; net[1].size() == 65536
+//		net.emplace_back(65536); // create an empty weight table with size 65536
+//		net.emplace_back(65536); // create an empty weight table with size 65536
 	}
 	virtual void load_weights(const std::string& path) {
 		std::ifstream in(path, std::ios::in | std::ios::binary);
