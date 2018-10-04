@@ -14,14 +14,17 @@
 
 class weight {
 public:
+	typedef float type;
+
+public:
 	weight() {}
 	weight(size_t len) : value(len) {}
 	weight(weight&& f) : value(std::move(f.value)) {}
 	weight(const weight& f) = default;
 
 	weight& operator =(const weight& f) = default;
-	float& operator[] (size_t i) { return value[i]; }
-	const float& operator[] (size_t i) const { return value[i]; }
+	type& operator[] (size_t i) { return value[i]; }
+	const type& operator[] (size_t i) const { return value[i]; }
 	size_t size() const { return value.size(); }
 
 public:
@@ -29,7 +32,7 @@ public:
 		auto& value = w.value;
 		uint64_t size = value.size();
 		out.write(reinterpret_cast<const char*>(&size), sizeof(uint64_t));
-		out.write(reinterpret_cast<const char*>(value.data()), sizeof(float) * size);
+		out.write(reinterpret_cast<const char*>(value.data()), sizeof(type) * size);
 		return out;
 	}
 	friend std::istream& operator >>(std::istream& in, weight& w) {
@@ -37,10 +40,10 @@ public:
 		uint64_t size = 0;
 		in.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
 		value.resize(size);
-		in.read(reinterpret_cast<char*>(value.data()), sizeof(float) * size);
+		in.read(reinterpret_cast<char*>(value.data()), sizeof(type) * size);
 		return in;
 	}
 
 protected:
-	std::vector<float> value;
+	std::vector<type> value;
 };
