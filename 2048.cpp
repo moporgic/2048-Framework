@@ -11,80 +11,31 @@
 #include <iterator>
 #include <string>
 #include "board.h"
-#include "action.h"
-#include "agent.h"
-#include "episode.h"
-#include "statistic.h"
+#include "solver.h"
 
 int main(int argc, const char* argv[]) {
 	std::cout << "2048-Demo: ";
 	std::copy(argv, argv + argc, std::ostream_iterator<const char*>(std::cout, " "));
 	std::cout << std::endl << std::endl;
 
-	size_t total = 1000, block = 0, limit = 0;
-	std::string play_args, evil_args;
-	std::string load, save;
-	bool summary = false;
+	std::string solve_args;
+	int precision = 10;
 	for (int i = 1; i < argc; i++) {
 		std::string para(argv[i]);
-		if (para.find("--total=") == 0) {
-			total = std::stoull(para.substr(para.find("=") + 1));
-		} else if (para.find("--block=") == 0) {
-			block = std::stoull(para.substr(para.find("=") + 1));
-		} else if (para.find("--limit=") == 0) {
-			limit = std::stoull(para.substr(para.find("=") + 1));
-		} else if (para.find("--play=") == 0) {
-			play_args = para.substr(para.find("=") + 1);
-		} else if (para.find("--evil=") == 0) {
-			evil_args = para.substr(para.find("=") + 1);
-		} else if (para.find("--load=") == 0) {
-			load = para.substr(para.find("=") + 1);
-		} else if (para.find("--save=") == 0) {
-			save = para.substr(para.find("=") + 1);
-		} else if (para.find("--summary") == 0) {
-			summary = true;
+		if (para.find("--solve=") == 0) {
+			solve_args = para.substr(para.find("=") + 1);
+		} else if (para.find("--precision=") == 0) {
+			precision = std::stol(para.substr(para.find("=") + 1));
 		}
 	}
 
-	statistic stat(total, block, limit);
-
-	if (load.size()) {
-		std::ifstream in(load, std::ios::in);
-		in >> stat;
-		in.close();
-		summary |= stat.is_finished();
-	}
-
-	player play(play_args);
-	rndenv evil(evil_args);
-
-	while (!stat.is_finished()) {
-		play.open_episode("~:" + evil.name());
-		evil.open_episode(play.name() + ":~");
-
-		stat.open_episode(play.name() + ":" + evil.name());
-		episode& game = stat.back();
-		while (true) {
-			agent& who = game.take_turns(play, evil);
-			action move = who.take_action(game.state());
-			if (game.apply_action(move) != true) break;
-			if (who.check_for_win(game.state())) break;
-		}
-		agent& win = game.last_turns(play, evil);
-		stat.close_episode(win.name());
-
-		play.close_episode(win.name());
-		evil.close_episode(win.name());
-	}
-
-	if (summary) {
-		stat.summary();
-	}
-
-	if (save.size()) {
-		std::ofstream out(save, std::ios::out | std::ios::trunc);
-		out << stat;
-		out.close();
+	solver solve(solve_args);
+	board state;
+	state_type type;
+	std::cout << std::setprecision(precision);
+	while (std::cin >> type >> state) {
+		auto ans = solve.solve2x3(state, type);
+		std::cout << "= " << ans << std::endl;
 	}
 
 	return 0;

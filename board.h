@@ -2,6 +2,7 @@
 #include <array>
 #include <iostream>
 #include <iomanip>
+#include <cmath>
 
 /**
  * array-based board for 2048
@@ -167,6 +168,14 @@ public:
 		}
 		out << "+------------------------+" << std::endl;
 		return out;
+	}
+	friend std::istream& operator >>(std::istream& in, board& b) {
+		for (int i = 0; i < 16; i++) {
+			while (!std::isdigit(in.peek()) && in.good()) in.ignore(1);
+			in >> b(i);
+			b(i) = std::log2(b(i));
+		}
+		return in;
 	}
 
 private:
