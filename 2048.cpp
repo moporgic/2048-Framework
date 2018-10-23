@@ -32,10 +32,12 @@ int main(int argc, const char* argv[]) {
 	solver solve(solve_args);
 	board state;
 	state_type type;
+	state_hint hint(state);
 	std::cout << std::setprecision(precision);
-	while (std::cin >> type >> state) {
-		auto ans = solve.solve2x3(state, type);
-		std::cout << "= " << ans << std::endl;
+	while (std::cin >> type >> state >> hint) {
+		auto value = solve.solve(state, type);
+		std::cout << type << " " << state << " " << hint;
+		std::cout << " = " << value << std::endl;
 	}
 
 	return 0;

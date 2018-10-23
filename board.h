@@ -160,13 +160,9 @@ public:
 
 public:
 	friend std::ostream& operator <<(std::ostream& out, const board& b) {
-		out << "+------------------------+" << std::endl;
-		for (auto& row : b.tile) {
-			out << "|" << std::dec;
-			for (auto t : row) out << std::setw(6) << ((1 << t) & -2u);
-			out << "|" << std::endl;
+		for (int i = 0; i < 16; i++) {
+			out << std::setw(std::min(i, 1)) << "" << ((1 << b(i)) & -2u);
 		}
-		out << "+------------------------+" << std::endl;
 		return out;
 	}
 	friend std::istream& operator >>(std::istream& in, board& b) {
