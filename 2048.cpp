@@ -10,11 +10,99 @@
 #include <fstream>
 #include <iterator>
 #include <string>
+#include <regex>
+#include <memory>
 #include "board.h"
 #include "action.h"
 #include "agent.h"
 #include "episode.h"
 #include "statistic.h"
+#include "arena.h"
+#include "io.h"
+
+int shell(int argc, const char* argv[]) {
+	arena arena;
+
+	for (int i = 1; i < argc; i++) {
+		std::string para(argv[i]);
+		if (para.find("--play") == 0) {
+			std::shared_ptr<agent> play(new player(para.substr(para.find("=") + 1)));
+			arena.register_agent(play);
+		} else if (para.find("--evil") == 0) {
+			std::shared_ptr<agent> evil(new rndenv(para.substr(para.find("=") + 1)));
+			arena.register_agent(evil);
+		} else if (para.find("--save=") == 0) {
+			arena.set_dump_file(para.substr(para.find("=") + 1));
+		}
+	}
+
+	std::regex match_move("^#\\S+ \\S+$"); // e.g. "#M0001 ?", "#M0001 #U"
+	std::regex match_ctrl("^#\\S+ \\S+ \\S+$"); // e.g. "#M0001 open Slider:Placer", "#M0001 close score=15424"
+	std::regex arena_ctrl("^@ \\S+.*$"); // e.g. "@ login", "@ error the name "AgentName" has already been taken"
+	std::regex arena_info("^\\? \\S+.*$"); // e.g. "? message from anonymous: 2048!!!"
+
+	for (std::string command; input() >> command; ) {
+		if (std::regex_match(command, match_move)) {
+			std::string id, move;
+			std::stringstream(command) >> id >> move;
+
+			if (move == "?") {
+				// your agent need to take an action
+				action a = arena.at(id).take_action();
+				arena.at(id).apply_action(a);
+				output() << id << ' ' << a << std::endl;
+			} else {
+				// perform your opponent's action
+				action a;
+				std::stringstream(move) >> a;
+				arena.at(id).apply_action(a);
+			}
+
+		} else if (std::regex_match(command, match_ctrl)) {
+			std::string id, type, tag;
+			std::stringstream(command) >> id >> type >> tag;
+
+			if (type == "open") {
+				// a new match is pending
+				if (arena.open(id, tag)) {
+					output() << id << " accept" << std::endl;
+				} else {
+					output() << id << " reject" << std::endl;
+				}
+			} else if (type == "close") {
+				// a match is finished
+				arena.close(id, tag);
+			}
+
+		} else if (std::regex_match(command, arena_ctrl)) {
+			std::string type;
+			std::stringstream(command) >> type >> type;
+
+			if (type == "login") {
+				// register yourself and your agents
+				std::stringstream agents;
+				for (auto who : arena.list_agents()) {
+					agents << " " << who->name() << "(" << who->role() << ")";
+				}
+				output() << "login " << "anonymous" << agents.str();
+
+			} else if (type == "error") {
+				// error message from arena server
+				std::string message = command.substr(command.find(' ', command.find("error")) + 1);
+				std::cerr << message << std::endl;
+				break;
+			}
+
+		} else if (std::regex_match(command, arena_info)) {
+			// message from arena server
+			std::string message = command.substr(command.find(' ') + 1);
+			std::cerr << message << std::endl;
+
+		}
+	}
+
+	return 0;
+}
 
 int main(int argc, const char* argv[]) {
 	std::cout << "2048-Demo: ";
@@ -43,6 +131,8 @@ int main(int argc, const char* argv[]) {
 			save = para.substr(para.find("=") + 1);
 		} else if (para.find("--summary") == 0) {
 			summary = true;
+		} else if (para.find("--shell") == 0) {
+			return shell(argc, argv);
 		}
 	}
 
