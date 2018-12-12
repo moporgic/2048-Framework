@@ -84,11 +84,11 @@ int shell(int argc, const char* argv[]) {
 				for (auto who : arena.list_agents()) {
 					agents << " " << who->name() << "(" << who->role() << ")";
 				}
-				output() << "login " << "anonymous" << agents.str();
+				output() << "login " << "anonymous" << agents.str() << std::endl;
 
 			} else if (type == "error") {
 				// error message from arena server
-				std::string message = command.substr(command.find(' ', command.find("error")) + 1);
+				std::string message = command.substr(command.find(' ') + 1);
 				std::cerr << message << std::endl;
 				break;
 			}
