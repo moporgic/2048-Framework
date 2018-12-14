@@ -21,18 +21,20 @@
 #include "io.h"
 
 int shell(int argc, const char* argv[]) {
-	arena host;
+	arena host("anonymous");
 
 	for (int i = 1; i < argc; i++) {
 		std::string para(argv[i]);
-		if (para.find("--play") == 0) {
+		if (para.find("--name=") == 0 || para.find("--account=") == 0) {
+			host.set_account(para.substr(para.find("=") + 1));
+		} else if (para.find("--save=") == 0 || para.find("--dump=") == 0) {
+			host.set_dump_file(para.substr(para.find("=") + 1));
+		} else if (para.find("--play") == 0) {
 			std::shared_ptr<agent> play(new player(para.substr(para.find("=") + 1)));
 			host.register_agent(play);
 		} else if (para.find("--evil") == 0) {
 			std::shared_ptr<agent> evil(new rndenv(para.substr(para.find("=") + 1)));
 			host.register_agent(evil);
-		} else if (para.find("--save=") == 0) {
-			host.set_dump_file(para.substr(para.find("=") + 1));
 		}
 	}
 
@@ -84,7 +86,7 @@ int shell(int argc, const char* argv[]) {
 				for (auto who : host.list_agents()) {
 					agents << " " << who->name() << "(" << who->role() << ")";
 				}
-				output() << "@ login " << "anonymous" << agents.str() << std::endl;
+				output() << "@ login " << host.account() << agents.str() << std::endl;
 
 			} else if (type == "error") {
 				// error message from arena server
