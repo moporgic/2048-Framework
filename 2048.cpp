@@ -84,7 +84,7 @@ int shell(int argc, const char* argv[]) {
 				for (auto who : arena.list_agents()) {
 					agents << " " << who->name() << "(" << who->role() << ")";
 				}
-				output() << "login " << "anonymous" << agents.str() << std::endl;
+				output() << "@ login " << "anonymous" << agents.str() << std::endl;
 
 			} else if (type == "error") {
 				// error message from arena server
