@@ -21,18 +21,18 @@
 #include "io.h"
 
 int shell(int argc, const char* argv[]) {
-	arena arena;
+	arena host;
 
 	for (int i = 1; i < argc; i++) {
 		std::string para(argv[i]);
 		if (para.find("--play") == 0) {
 			std::shared_ptr<agent> play(new player(para.substr(para.find("=") + 1)));
-			arena.register_agent(play);
+			host.register_agent(play);
 		} else if (para.find("--evil") == 0) {
 			std::shared_ptr<agent> evil(new rndenv(para.substr(para.find("=") + 1)));
-			arena.register_agent(evil);
+			host.register_agent(evil);
 		} else if (para.find("--save=") == 0) {
-			arena.set_dump_file(para.substr(para.find("=") + 1));
+			host.set_dump_file(para.substr(para.find("=") + 1));
 		}
 	}
 
@@ -48,14 +48,14 @@ int shell(int argc, const char* argv[]) {
 
 			if (move == "?") {
 				// your agent need to take an action
-				action a = arena.at(id).take_action();
-				arena.at(id).apply_action(a);
+				action a = host.at(id).take_action();
+				host.at(id).apply_action(a);
 				output() << id << ' ' << a << std::endl;
 			} else {
 				// perform your opponent's action
 				action a;
 				std::stringstream(move) >> a;
-				arena.at(id).apply_action(a);
+				host.at(id).apply_action(a);
 			}
 
 		} else if (std::regex_match(command, match_ctrl)) {
@@ -64,14 +64,14 @@ int shell(int argc, const char* argv[]) {
 
 			if (type == "open") {
 				// a new match is pending
-				if (arena.open(id, tag)) {
+				if (host.open(id, tag)) {
 					output() << id << " accept" << std::endl;
 				} else {
 					output() << id << " reject" << std::endl;
 				}
 			} else if (type == "close") {
 				// a match is finished
-				arena.close(id, tag);
+				host.close(id, tag);
 			}
 
 		} else if (std::regex_match(command, arena_ctrl)) {
@@ -81,7 +81,7 @@ int shell(int argc, const char* argv[]) {
 			if (type == "login") {
 				// register yourself and your agents
 				std::stringstream agents;
-				for (auto who : arena.list_agents()) {
+				for (auto who : host.list_agents()) {
 					agents << " " << who->name() << "(" << who->role() << ")";
 				}
 				output() << "@ login " << "anonymous" << agents.str() << std::endl;
