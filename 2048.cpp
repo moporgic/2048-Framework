@@ -89,14 +89,14 @@ int shell(int argc, const char* argv[]) {
 			} else if (type == "error") {
 				// error message from arena server
 				std::string message = command.substr(command.find(' ') + 1);
-				std::cerr << message << std::endl;
+				error() << message << std::endl;
 				break;
 			}
 
 		} else if (std::regex_match(command, arena_info)) {
 			// message from arena server
 			std::string message = command.substr(command.find(' ') + 1);
-			std::cerr << message << std::endl;
+			info() << message << std::endl;
 
 		}
 	}
