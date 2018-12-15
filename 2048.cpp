@@ -43,6 +43,17 @@ int shell(int argc, const char* argv[]) {
 	std::regex arena_ctrl("^@ \\S+.*$"); // e.g. "@ login", "@ error the name "AgentName" has already been taken"
 	std::regex arena_info("^\\? \\S+.*$"); // e.g. "? message from anonymous: 2048!!!"
 
+	std::vector<std::string> headless = {
+		"#ID ? --> #ID SLIDE|PLACE",
+		"#ID SLIDE|PLACE",
+		"#ID open AGENT:AGENT --> #ID accept|reject",
+		"#ID close TAG",
+		"@ login --> @ login: ACCOUNT AGENT(ROLE)...",
+		"@ status --> % STATUS-MULTILINE",
+		"@ error MESSAGE",
+		"? MESSAGE",
+		"(ex) --> ? exception MESSAGE at \"COMMAND\"",
+	};
 	for (std::string command; input() >> command; ) {
 		try {
 			if (std::regex_match(command, match_move)) {
@@ -87,7 +98,25 @@ int shell(int argc, const char* argv[]) {
 					for (auto who : host.list_agents()) {
 						agents << " " << who->name() << "(" << who->role() << ")";
 					}
-					output() << "@ login " << host.account() << agents.str() << std::endl;
+					output("@ ") << "login: " << host.account() << agents.str() << std::endl;
+
+				} else if (ctrl == "status") {
+					// display current local status
+					output("% ") << "+++++ status +++++" << std::endl;
+					std::stringstream agents;
+					for (auto who : host.list_agents()) {
+						agents << " " << who->name() << "(" << who->role() << ")";
+					}
+					output("% ") << "login: " << host.account() << agents.str() << std::endl;
+					output("% ") << "headless: " << std::endl;
+					for (auto cmd : headless) {
+						output("% ") << cmd << std::endl;
+					}
+					output("% ") << "episodes: " << host.list_matches().size() << std::endl;
+					for (auto epi : host.list_matches()) {
+						output("% ") << (*epi) << std::endl;
+					}
+					output("% ") << "----- status -----" << std::endl;
 
 				} else if (ctrl == "error") {
 					// error message from arena server
@@ -105,7 +134,7 @@ int shell(int argc, const char* argv[]) {
 		} catch (std::exception& ex) {
 			std::string message = std::string(typeid(ex).name()) + ": " + ex.what();
 			message = message.substr(0, message.find_first_of("\r\n"));
-			output() << "? report exception " << message << " at \"" << command << "\"" << std::endl;
+			output("? ") << "exception " << message << " at \"" << command << "\"" << std::endl;
 			info() << "exception " << message << " at \"" << command << "\"" << std::endl;
 		}
 	}
