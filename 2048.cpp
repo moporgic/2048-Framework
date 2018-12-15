@@ -47,7 +47,7 @@ int shell(int argc, const char* argv[]) {
 		try {
 			if (std::regex_match(command, match_move)) {
 				std::string id, move;
-				std::stringstream(command).ignore(1) >> id >> move;
+				std::stringstream(command) >> id >> move;
 
 				if (move == "?") {
 					// your agent need to take an action
@@ -63,7 +63,7 @@ int shell(int argc, const char* argv[]) {
 
 			} else if (std::regex_match(command, match_ctrl)) {
 				std::string id, ctrl, tag;
-				std::stringstream(command).ignore(1) >> id >> ctrl >> tag;
+				std::stringstream(command) >> id >> ctrl >> tag;
 
 				if (ctrl == "open") {
 					// a new match is pending
