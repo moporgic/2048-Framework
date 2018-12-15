@@ -62,26 +62,26 @@ int shell(int argc, const char* argv[]) {
 				}
 
 			} else if (std::regex_match(command, match_ctrl)) {
-				std::string id, type, tag;
-				std::stringstream(command) >> id >> type >> tag;
+				std::string id, ctrl, tag;
+				std::stringstream(command) >> id >> ctrl >> tag;
 
-				if (type == "open") {
+				if (ctrl == "open") {
 					// a new match is pending
 					if (host.open(id, tag)) {
 						output() << id << " accept" << std::endl;
 					} else {
 						output() << id << " reject" << std::endl;
 					}
-				} else if (type == "close") {
+				} else if (ctrl == "close") {
 					// a match is finished
 					host.close(id, tag);
 				}
 
 			} else if (std::regex_match(command, arena_ctrl)) {
-				std::string type;
-				std::stringstream(command) >> type >> type;
+				std::string ctrl;
+				std::stringstream(command) >> ctrl >> ctrl;
 
-				if (type == "login") {
+				if (ctrl == "login") {
 					// register yourself and your agents
 					std::stringstream agents;
 					for (auto who : host.list_agents()) {
@@ -89,7 +89,7 @@ int shell(int argc, const char* argv[]) {
 					}
 					output() << "@ login " << host.account() << agents.str() << std::endl;
 
-				} else if (type == "error") {
+				} else if (ctrl == "error") {
 					// error message from arena server
 					std::string message = command.substr(command.find(' ') + 1);
 					error() << message << std::endl;
