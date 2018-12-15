@@ -40,7 +40,7 @@ int shell(int argc, const char* argv[]) {
 
 	std::regex match_move("^#\\S+ \\S+$"); // e.g. "#M0001 ?", "#M0001 #U"
 	std::regex match_ctrl("^#\\S+ \\S+ \\S+$"); // e.g. "#M0001 open Slider:Placer", "#M0001 close score=15424"
-	std::regex arena_ctrl("^@ \\S+.*$"); // e.g. "@ login", "@ error the name "AgentName" has already been taken"
+	std::regex arena_ctrl("^@ \\S+.*$"); // e.g. "@ login", "@ error the account "Name" has already been taken"
 	std::regex arena_info("^\\? \\S+.*$"); // e.g. "? message from anonymous: 2048!!!"
 
 	for (std::string command; input() >> command; ) {
