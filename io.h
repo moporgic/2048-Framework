@@ -21,7 +21,7 @@ private:
 
 class output {
 public:
-	output(const std::string& init = "", std::ostream& out = std::cout) : out(out), buf(init) {}
+	output(const std::string& init = "", std::ostream& out = std::cout) : out(out) { buf << init; }
 	output(const output&) = delete;
 	~output() { out << buf.str() << std::flush; }
 	template<typename type> output& operator<<(const type& v) { buf << v; return *this; }
