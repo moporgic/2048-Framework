@@ -103,8 +103,8 @@ int shell(int argc, const char* argv[]) {
 					}
 					output("% ") << "----- status -----" << std::endl;
 
-				} else if (ctrl == "error") {
-					// error message from arena server
+				} else if (ctrl == "error" || ctrl == "exit") {
+					// some error messages or exit command
 					std::string message = command.substr(command.find(' ') + 1);
 					error() << message << std::endl;
 					break;
