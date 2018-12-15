@@ -97,7 +97,7 @@ int shell(int argc, const char* argv[]) {
 						agents << " " << who->name() << "(" << who->role() << ")";
 					}
 					output("% ") << "login: " << host.account() << agents.str() << std::endl;
-					output("% ") << "episodes: " << host.list_matches().size() << std::endl;
+					output("% ") << "match: " << host.list_matches().size() << std::endl;
 					for (auto ep : host.list_matches()) {
 						output("% ") << ep->name() << " " << (*ep) << std::endl;
 					}
