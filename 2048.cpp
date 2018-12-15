@@ -43,17 +43,6 @@ int shell(int argc, const char* argv[]) {
 	std::regex arena_ctrl("^@ \\S+.*$"); // e.g. "@ login", "@ error the name "AgentName" has already been taken"
 	std::regex arena_info("^\\? \\S+.*$"); // e.g. "? message from anonymous: 2048!!!"
 
-	std::vector<std::string> headless = {
-		"#ID ? --> #ID SLIDE|PLACE",
-		"#ID SLIDE|PLACE",
-		"#ID open AGENT:AGENT --> #ID accept|reject",
-		"#ID close TAG",
-		"@ login --> @ login: ACCOUNT AGENT(ROLE)...",
-		"@ status --> % STATUS-MULTILINE",
-		"@ error MESSAGE",
-		"? MESSAGE",
-		"(ex) --> ? exception MESSAGE at \"COMMAND\"",
-	};
 	for (std::string command; input() >> command; ) {
 		try {
 			if (std::regex_match(command, match_move)) {
@@ -108,10 +97,6 @@ int shell(int argc, const char* argv[]) {
 						agents << " " << who->name() << "(" << who->role() << ")";
 					}
 					output("% ") << "login: " << host.account() << agents.str() << std::endl;
-					output("% ") << "headless: " << std::endl;
-					for (auto cmd : headless) {
-						output("% ") << cmd << std::endl;
-					}
 					output("% ") << "episodes: " << host.list_matches().size() << std::endl;
 					for (auto epi : host.list_matches()) {
 						output("% ") << (*epi) << std::endl;
