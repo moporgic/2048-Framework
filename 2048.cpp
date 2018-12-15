@@ -44,62 +44,69 @@ int shell(int argc, const char* argv[]) {
 	std::regex arena_info("^\\? \\S+.*$"); // e.g. "? message from anonymous: 2048!!!"
 
 	for (std::string command; input() >> command; ) {
-		if (std::regex_match(command, match_move)) {
-			std::string id, move;
-			std::stringstream(command) >> id >> move;
+		try {
+			if (std::regex_match(command, match_move)) {
+				std::string id, move;
+				std::stringstream(command) >> id >> move;
 
-			if (move == "?") {
-				// your agent need to take an action
-				action a = host.at(id).take_action();
-				host.at(id).apply_action(a);
-				output() << id << ' ' << a << std::endl;
-			} else {
-				// perform your opponent's action
-				action a;
-				std::stringstream(move) >> a;
-				host.at(id).apply_action(a);
-			}
-
-		} else if (std::regex_match(command, match_ctrl)) {
-			std::string id, type, tag;
-			std::stringstream(command) >> id >> type >> tag;
-
-			if (type == "open") {
-				// a new match is pending
-				if (host.open(id, tag)) {
-					output() << id << " accept" << std::endl;
+				if (move == "?") {
+					// your agent need to take an action
+					action a = host.at(id).take_action();
+					host.at(id).apply_action(a);
+					output() << id << ' ' << a << std::endl;
 				} else {
-					output() << id << " reject" << std::endl;
+					// perform your opponent's action
+					action a;
+					std::stringstream(move) >> a;
+					host.at(id).apply_action(a);
 				}
-			} else if (type == "close") {
-				// a match is finished
-				host.close(id, tag);
-			}
 
-		} else if (std::regex_match(command, arena_ctrl)) {
-			std::string type;
-			std::stringstream(command) >> type >> type;
+			} else if (std::regex_match(command, match_ctrl)) {
+				std::string id, type, tag;
+				std::stringstream(command) >> id >> type >> tag;
 
-			if (type == "login") {
-				// register yourself and your agents
-				std::stringstream agents;
-				for (auto who : host.list_agents()) {
-					agents << " " << who->name() << "(" << who->role() << ")";
+				if (type == "open") {
+					// a new match is pending
+					if (host.open(id, tag)) {
+						output() << id << " accept" << std::endl;
+					} else {
+						output() << id << " reject" << std::endl;
+					}
+				} else if (type == "close") {
+					// a match is finished
+					host.close(id, tag);
 				}
-				output() << "@ login " << host.account() << agents.str() << std::endl;
 
-			} else if (type == "error") {
-				// error message from arena server
+			} else if (std::regex_match(command, arena_ctrl)) {
+				std::string type;
+				std::stringstream(command) >> type >> type;
+
+				if (type == "login") {
+					// register yourself and your agents
+					std::stringstream agents;
+					for (auto who : host.list_agents()) {
+						agents << " " << who->name() << "(" << who->role() << ")";
+					}
+					output() << "@ login " << host.account() << agents.str() << std::endl;
+
+				} else if (type == "error") {
+					// error message from arena server
+					std::string message = command.substr(command.find(' ') + 1);
+					error() << message << std::endl;
+					break;
+				}
+
+			} else if (std::regex_match(command, arena_info)) {
+				// message from arena server
 				std::string message = command.substr(command.find(' ') + 1);
-				error() << message << std::endl;
-				break;
+				info() << message << std::endl;
+
 			}
-
-		} else if (std::regex_match(command, arena_info)) {
-			// message from arena server
-			std::string message = command.substr(command.find(' ') + 1);
-			info() << message << std::endl;
-
+		} catch (std::exception& ex) {
+			std::string message = std::string(typeid(ex).name()) + ": " + ex.what();
+			message = message.substr(0, message.find_first_of("\r\n"));
+			output() << "? report exception " << message << " at \"" << command << "\"" << std::endl;
+			info() << "exception " << message << " at \"" << command << "\"" << std::endl;
 		}
 	}
 
