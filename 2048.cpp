@@ -106,7 +106,7 @@ int shell(int argc, const char* argv[]) {
 				} else if (ctrl == "error" || ctrl == "exit") {
 					// some error messages or exit command
 					std::string message = command.substr(command.find_first_not_of("@ "));
-					error() << message << std::endl;
+					info() << message << std::endl;
 					break;
 				}
 
@@ -120,7 +120,6 @@ int shell(int argc, const char* argv[]) {
 			std::string message = std::string(typeid(ex).name()) + ": " + ex.what();
 			message = message.substr(0, message.find_first_of("\r\n"));
 			output("? ") << "exception " << message << " at \"" << command << "\"" << std::endl;
-			info() << "exception " << message << " at \"" << command << "\"" << std::endl;
 		}
 	}
 

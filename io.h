@@ -40,10 +40,3 @@ public:
 	info& operator =(const info&) = delete;
 };
 
-class error : public output {
-public:
-	error(const std::string& init = "") : output(init, std::cerr) {}
-	error(const error&) = delete;
-	error& operator =(const error&) = delete;
-};
-
