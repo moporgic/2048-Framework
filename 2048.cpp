@@ -40,14 +40,14 @@ int shell(int argc, const char* argv[]) {
 
 	std::regex match_move("^#\\S+ \\S+$"); // e.g. "#M0001 ?", "#M0001 #U"
 	std::regex match_ctrl("^#\\S+ \\S+ \\S+$"); // e.g. "#M0001 open Slider:Placer", "#M0001 close score=15424"
-	std::regex arena_ctrl("^@ \\S+.*$"); // e.g. "@ login", "@ error the account "Name" has already been taken"
-	std::regex arena_info("^\\? \\S+.*$"); // e.g. "? message from anonymous: 2048!!!"
+	std::regex arena_ctrl("^@.+$"); // e.g. "@ login", "@ error the account "Name" has already been taken"
+	std::regex arena_info("^\\?.+$"); // e.g. "? message from anonymous: 2048!!!"
 
 	for (std::string command; input() >> command; ) {
 		try {
 			if (std::regex_match(command, match_move)) {
 				std::string id, move;
-				std::stringstream(command) >> id >> move;
+				std::stringstream(command).ignore(1) >> id >> move;
 
 				if (move == "?") {
 					// your agent need to take an action
@@ -63,7 +63,7 @@ int shell(int argc, const char* argv[]) {
 
 			} else if (std::regex_match(command, match_ctrl)) {
 				std::string id, ctrl, tag;
-				std::stringstream(command) >> id >> ctrl >> tag;
+				std::stringstream(command).ignore(1) >> id >> ctrl >> tag;
 
 				if (ctrl == "open") {
 					// a new match is pending
@@ -79,7 +79,7 @@ int shell(int argc, const char* argv[]) {
 
 			} else if (std::regex_match(command, arena_ctrl)) {
 				std::string ctrl;
-				std::stringstream(command) >> ctrl >> ctrl;
+				std::stringstream(command).ignore(1) >> ctrl;
 
 				if (ctrl == "login") {
 					// register yourself and your agents
@@ -105,14 +105,14 @@ int shell(int argc, const char* argv[]) {
 
 				} else if (ctrl == "error" || ctrl == "exit") {
 					// some error messages or exit command
-					std::string message = command.substr(command.find(' ') + 1);
+					std::string message = command.substr(command.find_first_not_of("@ "));
 					error() << message << std::endl;
 					break;
 				}
 
 			} else if (std::regex_match(command, arena_info)) {
 				// message from arena server
-				std::string message = command.substr(command.find(' ') + 1);
+				std::string message = command.substr(command.find_first_not_of("? "));
 				info() << message << std::endl;
 
 			}
