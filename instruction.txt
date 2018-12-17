@@ -9,3 +9,36 @@ $ ./2048 --shell --save="stat.txt"
 
 To enter the interactive shell, set a dump file, and initialize some agents
 $ ./2048 --shell --save="stat.txt" --play="some arguments..." --evil="some arguments..."
+
+===================================================
+To link the interactive shell with the arena server
+
+First, check the IP address and the port of the arena server, here we assume that it is 127.0.0.1:32768
+$ chmod +x arena-link arena-ctrl # make the scripts executable
+$ ./arena-link 127.0.0.1:32768 ./2048 --shell --save="stat.txt" --play="some arguments..." --evil="some arguments..."
+
+However, it is recommended to wrap the complete shell command "./2048 --shell ..." with another script file.
+For example, create a new script file "run.sh" whose content is
+#!/bin/bash
+./2048 --shell --save="stat.txt" --play="some arguments..." --evil="some arguments..." --arguments...
+
+Now you can use the wrapper to launch your program
+$ chmod +x run.sh # make the script executable
+$ ./arena-link 127.0.0.1:32768 ./run.sh
+
+Two messages will be displayed once the arena-link starts
+arena-link: 127.0.0.1:32768 <--> ./run.sh
+arena-ctrl: ./arena-link-20181217013439562
+
+The second line indicates the control panel of this session
+To active the control panel, you need another terminal in the same working directory
+$ ./arena-link-20181217013439562 # perform this operation in another terminal
+
+Once the control panel is activated, you can send some data to the arena or your program.
+To send something to the remote server, use the prefix "<< "
+To send something to the local program, use the prefix ">> "
+
+For example, if you want to open a match with other, and you do not write such a algorithm in your program's shell, use this command:
+<< # open @UserName:@UserName
+Or, if you want to terminate your shell normally with the built-in function exit, use this command:
+>> @ exit

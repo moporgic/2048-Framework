@@ -1,0 +1,35 @@
+#!/bin/bash
+# program: arena linker
+# version: 2017/12 by moporgic
+# usage: arena-link host:port shell
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+
+arena="$1"
+shell="${@:2}"
+
+sess=$(date '+%Y%m%d%H%M%S%3N')
+recv="/tmp/arena-link-$sess-i"
+send="/tmp/arena-link-$sess-o"
+ctrl="./arena-link-$sess"
+
+echo "arena-link: $arena <--> $shell"
+echo "arena-ctrl: $ctrl"
+
+mkfifo -m 0600 $recv $send
+echo "#!/bin/bash" > $ctrl
+echo "./arena-ctrl $recv $send \"<< \"" >> $ctrl
+chmod +x $ctrl
+
+shut() { pkill -P $$; pkill -f $sess; }
+finish() { exec 2> /dev/null; rm $recv $send $ctrl; shut; }
+trap finish SIGINT SIGTERM EXIT
+
+prefix() { while IFS= read -r line; do echo "$1${line:0:2048}"; done; }
+
+cat $send | tee >(if command -v ncat > /dev/null
+then ncat ${arena/:/ } --ssl
+else openssl s_client -quiet -connect $arena
+fi 2> /dev/null >> $recv) | prefix "<< " &
+cat $recv | tee >("${@:2}" >> $send) | prefix ">> " &
+
+wait -n

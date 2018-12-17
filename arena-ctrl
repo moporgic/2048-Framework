@@ -1,0 +1,23 @@
+#!/bin/bash
+# program: arena controller
+# version: 2017/12 by moporgic
+# usage: arena-ctrl recv send last
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+
+recv=$1
+send=$2
+last=$3
+
+[ "$last" ] || last="<< "
+while IFS= read -r line; do
+	case "${line:0:3}" in
+		"<< ") last="<< "; echo "${line:3:2048}" >> $send;;
+		">> ") last=">> "; echo "${line:3:2048}" >> $recv;;
+		"<> ") last="<> "; echo "${line:3:2048}" | tee -a $send >> $recv;;
+		*)	case "$last" in
+				"<< ") echo "$line" >> $send;;
+				">> ") echo "$line" >> $recv;;
+				"<> ") echo "$line" | tee -a $send >> $recv;;
+			esac;;
+	esac
+done
