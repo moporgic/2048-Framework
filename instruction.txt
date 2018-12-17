@@ -1,0 +1,12 @@
+To make the program
+$ make # default name of the executable is 2048, you can modify it in the makefile
+
+Keep the solver using standard input and output.
+To load some sample input from a file, use the input redirection:
+$ ./2048 < sample-input.txt
+
+To save your program's output to a file, use the output redirection:
+$ ./2048 > output.txt
+
+To load the input and save the output:
+$ ./2048 < sample-input.txt > output.txt
