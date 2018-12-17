@@ -7,6 +7,7 @@ class input {
 public:
 	input(std::istream& in = std::cin) : in(in) {}
 	input(const input&) = delete;
+	input(input&&) = default;
 	operator bool() const { return bool(in); }
 	operator std::string() { std::string line; operator>>(line); return line; }
 	input& operator>>(std::string& line) {
@@ -23,6 +24,7 @@ class output {
 public:
 	output(const std::string& init = "", std::ostream& out = std::cout) : out(out) { buf << init; }
 	output(const output&) = delete;
+	output(output&&) = default;
 	~output() { out << buf.str() << std::flush; }
 	template<typename type> output& operator<<(const type& v) { buf << v; return *this; }
 	output& operator<<(std::ios_base& (*pf)(std::ios_base&)) { buf << pf; return *this; }
