@@ -68,9 +68,9 @@ int shell(int argc, const char* argv[]) {
 				if (ctrl == "open") {
 					// a new match is pending
 					if (host.open(id, tag)) {
-						output() << id << " accept" << std::endl;
+						output() << id << " " << host.account() << " accept" << std::endl;
 					} else {
-						output() << id << " reject" << std::endl;
+						output() << id << " " << host.account() << " reject" << std::endl;
 					}
 				} else if (ctrl == "close") {
 					// a match is finished
