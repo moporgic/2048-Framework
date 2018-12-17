@@ -40,8 +40,8 @@ int shell(int argc, const char* argv[]) {
 
 	std::regex match_move("^#\\S+ \\S+$"); // e.g. "#M0001 ?", "#M0001 #U"
 	std::regex match_ctrl("^#\\S+ \\S+ \\S+$"); // e.g. "#M0001 open Slider:Placer", "#M0001 close score=15424"
-	std::regex arena_ctrl("^@.+$"); // e.g. "@ login", "@ error the account "Name" has already been taken"
-	std::regex arena_info("^\\?.+$"); // e.g. "? message from anonymous: 2048!!!"
+	std::regex arena_ctrl("^[@$].+$"); // e.g. "@ login", "@ error the account "Name" has already been taken"
+	std::regex arena_info("^[?%].+$"); // e.g. "? message from anonymous: 2048!!!"
 
 	for (std::string command; input() >> command; ) {
 		try {
@@ -105,16 +105,13 @@ int shell(int argc, const char* argv[]) {
 
 				} else if (ctrl == "error" || ctrl == "exit") {
 					// some error messages or exit command
-					std::string message = command.substr(command.find_first_not_of("@ "));
+					std::string message = command.substr(command.find_first_not_of("@$ "));
 					info() << message << std::endl;
 					break;
 				}
 
 			} else if (std::regex_match(command, arena_info)) {
 				// message from arena server
-				std::string message = command.substr(command.find_first_not_of("? "));
-				info() << message << std::endl;
-
 			}
 		} catch (std::exception& ex) {
 			std::string message = std::string(typeid(ex).name()) + ": " + ex.what();
