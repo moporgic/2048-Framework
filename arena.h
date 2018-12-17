@@ -68,7 +68,7 @@ public:
 
 private:
 	std::shared_ptr<agent> find_agent(const std::string& name, const std::string& role) {
-		if (name[0] == '#' && name.substr(1) == account()) {
+		if (name[0] == '$' && name.substr(1) == account()) {
 			for (auto who : list_agents()) {
 				if (who->role()[0] == role[0]) return who;
 			}
