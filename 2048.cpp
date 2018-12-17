@@ -91,17 +91,17 @@ int shell(int argc, const char* argv[]) {
 
 				} else if (ctrl == "status") {
 					// display current local status
-					output("% ") << "+++++ status +++++" << std::endl;
-					std::stringstream agents;
+					info() << "+++++ status +++++" << std::endl;
+					info() << "login: " << host.account();
 					for (auto who : host.list_agents()) {
-						agents << " " << who->name() << "(" << who->role() << ")";
+						info() << " " << who->name() << "(" << who->role() << ")";
 					}
-					output("% ") << "login: " << host.account() << agents.str() << std::endl;
-					output("% ") << "match: " << host.list_matches().size() << std::endl;
+					info() << std::endl;
+					info() << "match: " << host.list_matches().size() << std::endl;
 					for (auto ep : host.list_matches()) {
-						output("% ") << ep->name() << " " << (*ep) << std::endl;
+						info() << ep->name() << " " << (*ep) << std::endl;
 					}
-					output("% ") << "----- status -----" << std::endl;
+					info() << "----- status -----" << std::endl;
 
 				} else if (ctrl == "error" || ctrl == "exit") {
 					// some error messages or exit command
