@@ -17,6 +17,16 @@ public:
 			agent& who = take_turns(*play, *evil);
 			return who.take_action(state());
 		}
+		void open_episode(const std::string& tag) {
+			play->open_episode(tag);
+			evil->open_episode(tag);
+			episode::open_episode(tag);
+		}
+		void close_episode(const std::string& tag) {
+			episode::close_episode(tag);
+			play->open_episode(tag);
+			evil->open_episode(tag);
+		}
 
 	private:
 		std::string id;
