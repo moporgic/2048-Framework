@@ -92,10 +92,17 @@ public:
 	std::string account() const {
 		return name;
 	}
+	std::string login() const {
+		return auth.size() ? name + auth : name;
+	}
 
 public:
 	void set_account(const std::string& name) {
 		this->name = name;
+	}
+	void set_login(const std::string& res) {
+		name = res.substr(0, res.find('|'));
+		auth = name != res ? res.substr(res.find('|')) : "";
 	}
 	void set_dump_file(const std::string& path) {
 		if (dump.is_open()) dump.close();
@@ -106,6 +113,6 @@ public:
 private:
 	std::unordered_map<std::string, std::shared_ptr<agent>> lounge;
 	std::unordered_map<std::string, std::shared_ptr<match>> ongoing;
-	std::string name;
+	std::string name, auth;
 	std::ofstream dump;
 };

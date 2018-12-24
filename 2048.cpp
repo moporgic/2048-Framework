@@ -27,6 +27,8 @@ int shell(int argc, const char* argv[]) {
 		std::string para(argv[i]);
 		if (para.find("--name=") == 0 || para.find("--account=") == 0) {
 			host.set_account(para.substr(para.find("=") + 1));
+		} else if (para.find("--login=") == 0) {
+			host.set_login(para.substr(para.find("=") + 1));
 		} else if (para.find("--save=") == 0 || para.find("--dump=") == 0) {
 			host.set_dump_file(para.substr(para.find("=") + 1));
 		} else if (para.find("--play") == 0) {
@@ -87,7 +89,7 @@ int shell(int argc, const char* argv[]) {
 					for (auto who : host.list_agents()) {
 						agents << " " << who->name() << "(" << who->role() << ")";
 					}
-					output("@ ") << "login " << host.account() << agents.str() << std::endl;
+					output("@ ") << "login " << host.login() << agents.str() << std::endl;
 
 				} else if (ctrl == "status") {
 					// display current local status
