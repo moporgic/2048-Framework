@@ -35,7 +35,7 @@ public:
 	};
 
 public:
-	arena(const std::string& name = "anonymous", const std::string& path = "") : name(name) {
+	arena(const std::string& name = "anonymous", const std::string& path = "") : name(name), auth(name) {
 		if (path.size()) set_dump_file(path);
 	}
 
@@ -103,7 +103,7 @@ public:
 		return name;
 	}
 	std::string login() const {
-		return auth.size() ? name + auth : name;
+		return auth;
 	}
 
 public:
@@ -112,7 +112,7 @@ public:
 	}
 	void set_login(const std::string& res) {
 		name = res.substr(0, res.find('|'));
-		auth = name != res ? res.substr(res.find('|')) : "";
+		auth = res;
 	}
 	void set_dump_file(const std::string& path) {
 		if (dump.is_open()) dump.close();
