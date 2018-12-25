@@ -108,7 +108,7 @@ public:
 
 public:
 	void set_account(const std::string& name) {
-		this->name = name;
+		this->name = this->auth = name;
 	}
 	void set_login(const std::string& res) {
 		name = res.substr(0, res.find('|'));
