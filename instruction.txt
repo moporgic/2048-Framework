@@ -14,7 +14,7 @@ To load and review the statistic result from a file
 $ ./2048 --load=stat.txt --summary
 
 To display the statistic every 1000 episodes
-$ ./2048 --total=100000 --block=1000
+$ ./2048 --total=100000 --block=1000 --limit=1000
 
 To save the weights of player to a file
 $ ./2048 --play="save=weights.bin"
@@ -23,10 +23,10 @@ To load the weights of player from a file
 $ ./2048 --play="load=weights.bin"
 
 To train the network 100000 games, and save the weights to a file
-$ ./2048 --total=100000 --block=1000 --play="save=weights.bin"
+$ ./2048 --total=100000 --block=1000 --limit=1000 --play="save=weights.bin"
 
 To load the weights from a file, train the network for 100000 games, and save the weights
-$ ./2048 --total=100000 --block=1000 --play="load=weights.bin save=weights.bin"
+$ ./2048 --total=100000 --block=1000 --limit=1000 --play="load=weights.bin save=weights.bin"
 
 To set the learning rate of training
 $ ./2048 --play="alpha=0.0025"
