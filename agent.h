@@ -68,15 +68,17 @@ protected:
 };
 
 /**
- * base agent for agents with weight tables
+ * base agent for agents with weight tables and a learning rate
  */
 class weight_agent : public agent {
 public:
-	weight_agent(const std::string& args = "") : agent(args) {
+	weight_agent(const std::string& args = "") : agent(args), alpha(0) {
 		if (meta.find("init") != meta.end())
 			init_weights(meta["init"]);
 		if (meta.find("load") != meta.end())
 			load_weights(meta["load"]);
+		if (meta.find("alpha") != meta.end())
+			alpha = float(meta["alpha"]);
 	}
 	virtual ~weight_agent() {
 		if (meta.find("save") != meta.end())
@@ -108,20 +110,6 @@ protected:
 
 protected:
 	std::vector<weight> net;
-};
-
-/**
- * base agent for agents with a learning rate
- */
-class learning_agent : public agent {
-public:
-	learning_agent(const std::string& args = "") : agent(args), alpha(0.1f) {
-		if (meta.find("alpha") != meta.end())
-			alpha = float(meta["alpha"]);
-	}
-	virtual ~learning_agent() {}
-
-protected:
 	float alpha;
 };
 
