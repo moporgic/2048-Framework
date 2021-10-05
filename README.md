@@ -41,9 +41,9 @@ To load and review the statistic result from a file:
 
 ## Advanced Usage
 
-To train the network for 100000 games, and save the weights to a file:
+To initialize the network, train the network for 100000 games, and save the weights to a file:
 ```bash
-./2048 --total=100000 --block=1000 --limit=1000 --play="save=weights.bin" # need to inherit from weight_agent
+./2048 --total=100000 --block=1000 --limit=1000 --play="init save=weights.bin" # need to inherit from weight_agent
 ```
 
 To load the weights from a file, train the network for 100000 games, and save the weights:
