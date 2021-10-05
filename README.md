@@ -53,12 +53,12 @@ To load the weights from a file, train the network for 100000 games, and save th
 
 To train the network for 1000 games, with a specific learning rate:
 ```bash
-./2048 --total=1000 --play="alpha=0.0025" # need to inherit from learning_agent
+./2048 --total=1000 --play="init alpha=0.0025" # need to inherit from weight_agent
 ```
 
 To load the weights from a file, test the network for 1000 games, and save the statistic:
 ```bash
-./2048 --total=1000 --play="load=weights.bin alpha=0" --save="stat.txt"
+./2048 --total=1000 --play="load=weights.bin alpha=0" --save="stat.txt" # need to inherit from weight_agent
 ```
 
 ## Author
