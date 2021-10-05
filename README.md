@@ -61,6 +61,16 @@ To load the weights from a file, test the network for 1000 games, and save the s
 ./2048 --total=1000 --play="load=weights.bin alpha=0" --save="stat.txt" # need to inherit from weight_agent
 ```
 
+To perform a long training with periodic evaluations and network snapshots:
+```bash
+./2048 --total=0 --play="init save=weights.bin" # generate a clean network
+for i in {1..100}; do
+	./2048 --total=100000 --block=1000 --limit=1000 --play="load=weights.bin save=weights.bin" | tee -a train.log
+	./2048 --total=1000 --play="load=weights.bin alpha=0" --save="stat.txt"
+	tar zcvf weights.$(date +%Y%m%d-%H%M%S).tar.gz weights.bin train.log stat.txt
+done
+```
+
 ## Author
 
 [Computer Games and Intelligence (CGI) Lab](https://cgilab.nctu.edu.tw/), NYCU, Taiwan
