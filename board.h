@@ -135,13 +135,19 @@ public:
 		return score;
 	}
 
-	void transpose() {
-		for (int r = 0; r < 4; r++) {
-			for (int c = r + 1; c < 4; c++) {
-				std::swap(tile[r][c], tile[c][r]);
-			}
+	void rotate(int clockwise_count = 1) {
+		switch (((clockwise_count % 4) + 4) % 4) {
+		default:
+		case 0: break;
+		case 1: rotate_clockwise(); break;
+		case 2: reverse(); break;
+		case 3: rotate_counterclockwise(); break;
 		}
 	}
+
+	void rotate_clockwise() { transpose(); reflect_horizontal(); }
+	void rotate_counterclockwise() { transpose(); reflect_vertical(); }
+	void reverse() { reflect_horizontal(); reflect_vertical(); }
 
 	void reflect_horizontal() {
 		for (int r = 0; r < 4; r++) {
@@ -157,22 +163,13 @@ public:
 		}
 	}
 
-	/**
-	 * rotate the board clockwise by given times
-	 */
-	void rotate(int r = 1) {
-		switch (((r % 4) + 4) % 4) {
-		default:
-		case 0: break;
-		case 1: rotate_clockwise(); break;
-		case 2: reverse(); break;
-		case 3: rotate_counterclockwise(); break;
+	void transpose() {
+		for (int r = 0; r < 4; r++) {
+			for (int c = r + 1; c < 4; c++) {
+				std::swap(tile[r][c], tile[c][r]);
+			}
 		}
 	}
-
-	void rotate_clockwise() { transpose(); reflect_horizontal(); }
-	void rotate_counterclockwise() { transpose(); reflect_vertical(); }
-	void reverse() { reflect_horizontal(); reflect_vertical(); }
 
 public:
 	friend std::ostream& operator <<(std::ostream& out, const board& b) {
