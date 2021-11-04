@@ -30,6 +30,7 @@ public:
 	typedef std::array<cell, 4> row;
 	typedef std::array<row, 4> grid;
 	typedef uint64_t data;
+	typedef uint64_t score;
 	typedef int reward;
 
 public:

@@ -29,7 +29,7 @@ public:
 public:
 	board& state() { return ep_state; }
 	const board& state() const { return ep_state; }
-	board::reward score() const { return ep_score; }
+	board::score score() const { return ep_score; }
 
 	void open_episode(const std::string& tag) {
 		ep_open = { tag, millisec() };
@@ -176,7 +176,7 @@ protected:
 
 private:
 	board ep_state;
-	board::reward ep_score;
+	board::score ep_score;
 	std::vector<move> ep_moves;
 	time_t ep_time;
 

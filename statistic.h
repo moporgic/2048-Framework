@@ -60,7 +60,7 @@ public:
 		size_t stat[64] = { 0 };
 		size_t sop = 0, pop = 0, eop = 0;
 		time_t sdu = 0, pdu = 0, edu = 0;
-		board::reward sum = 0, max = 0;
+		board::score sum = 0, max = 0;
 		auto it = data.end();
 		for (size_t i = 0; i < blk; i++) {
 			auto& ep = *(--it);
@@ -90,7 +90,7 @@ public:
 		if (!tstat) return;
 		for (size_t t = 0, c = 0; c < blk; c += stat[t++]) {
 			if (stat[t] == 0) continue;
-			unsigned accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
+			size_t accu = std::accumulate(std::begin(stat) + t, std::end(stat), size_t(0));
 			std::cout << "\t" << ((1 << t) & -2u); // type
 			std::cout << "\t" << (accu * 100.0 / blk) << "%"; // win rate
 			std::cout << "\t" "(" << (stat[t] * 100.0 / blk) << "%" ")"; // percentage of ending
