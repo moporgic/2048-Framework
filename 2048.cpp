@@ -27,22 +27,23 @@ int main(int argc, const char* argv[]) {
 	std::string load, save;
 	bool summary = false;
 	for (int i = 1; i < argc; i++) {
-		std::string para(argv[i]);
-		if (para.find("--total=") == 0) {
-			total = std::stoull(para.substr(para.find("=") + 1));
-		} else if (para.find("--block=") == 0) {
-			block = std::stoull(para.substr(para.find("=") + 1));
-		} else if (para.find("--limit=") == 0) {
-			limit = std::stoull(para.substr(para.find("=") + 1));
-		} else if (para.find("--play=") == 0) {
-			play_args = para.substr(para.find("=") + 1);
-		} else if (para.find("--evil=") == 0) {
-			evil_args = para.substr(para.find("=") + 1);
-		} else if (para.find("--load=") == 0) {
-			load = para.substr(para.find("=") + 1);
-		} else if (para.find("--save=") == 0) {
-			save = para.substr(para.find("=") + 1);
-		} else if (para.find("--summary") == 0) {
+		std::string arg = argv[i];
+		std::string opt = arg.substr(arg.find('=') + 1);
+		if (arg.find("--total=") == 0) {
+			total = std::stoull(opt);
+		} else if (arg.find("--block=") == 0) {
+			block = std::stoull(opt);
+		} else if (arg.find("--limit=") == 0) {
+			limit = std::stoull(opt);
+		} else if (arg.find("--play=") == 0) {
+			play_args = opt;
+		} else if (arg.find("--evil=") == 0) {
+			evil_args = opt;
+		} else if (arg.find("--load=") == 0) {
+			load = opt;
+		} else if (arg.find("--save=") == 0) {
+			save = opt;
+		} else if (arg.find("--summary") == 0) {
 			summary = true;
 		}
 	}
