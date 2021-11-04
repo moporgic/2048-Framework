@@ -123,15 +123,15 @@ public:
 		return score;
 	}
 	reward slide_up() {
-		rotate_right();
+		rotate_clockwise();
 		reward score = slide_right();
-		rotate_left();
+		rotate_counterclockwise();
 		return score;
 	}
 	reward slide_down() {
-		rotate_right();
+		rotate_clockwise();
 		reward score = slide_left();
-		rotate_left();
+		rotate_counterclockwise();
 		return score;
 	}
 
@@ -164,14 +164,14 @@ public:
 		switch (((r % 4) + 4) % 4) {
 		default:
 		case 0: break;
-		case 1: rotate_right(); break;
+		case 1: rotate_clockwise(); break;
 		case 2: reverse(); break;
-		case 3: rotate_left(); break;
+		case 3: rotate_counterclockwise(); break;
 		}
 	}
 
-	void rotate_right() { transpose(); reflect_horizontal(); } // clockwise
-	void rotate_left() { transpose(); reflect_vertical(); } // counterclockwise
+	void rotate_clockwise() { transpose(); reflect_horizontal(); }
+	void rotate_counterclockwise() { transpose(); reflect_vertical(); }
 	void reverse() { reflect_horizontal(); reflect_vertical(); }
 
 public:
