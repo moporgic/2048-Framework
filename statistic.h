@@ -66,7 +66,7 @@ public:
 			auto& ep = *(--it);
 			sum += ep.score();
 			max = std::max(ep.score(), max);
-			stat[*std::max_element(&(ep.state()(0)), &(ep.state()(16)))]++;
+			stat[*std::max_element(ep.state().begin(), ep.state().end())]++;
 			sop += ep.step();
 			pop += ep.step(action::slide::type);
 			eop += ep.step(action::place::type);

@@ -46,6 +46,11 @@ public:
 	cell& operator ()(unsigned i) { return tile[i / 4][i % 4]; }
 	const cell& operator ()(unsigned i) const { return tile[i / 4][i % 4]; }
 
+	cell* begin() { return &(operator()(0)); }
+	const cell* begin() const { return &(operator()(0)); }
+	cell* end() { return begin() + 16; }
+	const cell* end() const { return begin() + 16; }
+
 	data info() const { return attr; }
 	data info(data dat) { data old = attr; attr = dat; return old; }
 
