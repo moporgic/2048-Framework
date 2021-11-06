@@ -87,8 +87,11 @@ public:
 
 protected:
 	virtual void init_weights(const std::string& info) {
-//		net.emplace_back(65536); // create an empty weight table with size 65536
-//		net.emplace_back(65536); // create an empty weight table with size 65536
+		std::string res = info; // comma-separated sizes, e.g., "65536,65536"
+		for (char& ch : res)
+			if (!std::isdigit(ch)) ch = ' ';
+		std::stringstream in(res);
+		for (size_t size; in >> size; net.emplace_back(size));
 	}
 	virtual void load_weights(const std::string& path) {
 		std::ifstream in(path, std::ios::in | std::ios::binary);

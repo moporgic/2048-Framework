@@ -43,7 +43,8 @@ To load and review the statistic result from a file:
 
 To initialize the network, train the network for 100000 games, and save the weights to a file:
 ```bash
-./2048 --total=100000 --block=1000 --limit=1000 --play="init save=weights.bin" # need to inherit from weight_agent
+weights_size="65536,65536,65536,65536,65536,65536,65536,65536" # 8x4-tuple
+./2048 --total=100000 --block=1000 --limit=1000 --play="init=$weights_size save=weights.bin" # need to inherit from weight_agent
 ```
 
 To load the weights from a file, train the network for 100000 games, and save the weights:
@@ -53,7 +54,8 @@ To load the weights from a file, train the network for 100000 games, and save th
 
 To train the network for 1000 games, with a specific learning rate:
 ```bash
-./2048 --total=1000 --play="init alpha=0.0025" # need to inherit from weight_agent
+weights_size="65536,65536,65536,65536,65536,65536,65536,65536" # 8x4-tuple
+./2048 --total=1000 --play="init=$weights_size alpha=0.0025" # need to inherit from weight_agent
 ```
 
 To load the weights from a file, test the network for 1000 games, and save the statistic:
@@ -63,7 +65,8 @@ To load the weights from a file, test the network for 1000 games, and save the s
 
 To perform a long training with periodic evaluations and network snapshots:
 ```bash
-./2048 --total=0 --play="init save=weights.bin" # generate a clean network
+weights_size="65536,65536,65536,65536,65536,65536,65536,65536" # 8x4-tuple
+./2048 --total=0 --play="init=$weights_size save=weights.bin" # generate a clean network
 for i in {1..100}; do
 	./2048 --total=100000 --block=1000 --limit=1000 --play="load=weights.bin save=weights.bin alpha=0.0025" | tee -a train.log
 	./2048 --total=1000 --play="load=weights.bin alpha=0" --save="stat.txt"
