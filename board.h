@@ -69,7 +69,7 @@ public:
 	 * return 0 if the action is valid, or -1 if not
 	 */
 	reward place(unsigned pos, cell tile) {
-		if (pos >= 16) return -1;
+		if (pos >= 16 || operator()(pos)) return -1;
 		if (tile != 1 && tile != 2) return -1;
 		operator()(pos) = tile;
 		return 0;
