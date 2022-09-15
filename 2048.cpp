@@ -24,43 +24,48 @@ int main(int argc, const char* argv[]) {
 
 	size_t total = 1000, block = 0, limit = 0;
 	std::string play_args, evil_args;
-	std::string load, save;
-	bool summary = false;
+	std::string load_path, save_path;
 	for (int i = 1; i < argc; i++) {
 		std::string arg = argv[i];
-		std::string opt = arg.substr(arg.find('=') + 1);
-		if (arg.find("--total=") == 0) {
-			total = std::stoull(opt);
-		} else if (arg.find("--block=") == 0) {
-			block = std::stoull(opt);
-		} else if (arg.find("--limit=") == 0) {
-			limit = std::stoull(opt);
-		} else if (arg.find("--play=") == 0) {
-			play_args = opt;
-		} else if (arg.find("--evil=") == 0) {
-			evil_args = opt;
-		} else if (arg.find("--load=") == 0) {
-			load = opt;
-		} else if (arg.find("--save=") == 0) {
-			save = opt;
-		} else if (arg.find("--summary") == 0) {
-			summary = true;
+		auto match = [&](std::string flag) -> bool {
+			auto it = arg.find_first_not_of('-');
+			return arg.find(flag, it) == it;
+		};
+		auto next_opt = [&]() -> std::string {
+			auto it = arg.find('=') + 1;
+			return it ? arg.substr(it) : argv[++i];
+		};
+		if (match("total")) {
+			total = std::stoull(next_opt());
+		} else if (match("block")) {
+			block = std::stoull(next_opt());
+		} else if (match("limit")) {
+			limit = std::stoull(next_opt());
+		} else if (match("play")) {
+			play_args = next_opt();
+		} else if (match("evil")) {
+			evil_args = next_opt();
+		} else if (match("load")) {
+			load_path = next_opt();
+		} else if (match("save")) {
+			save_path = next_opt();
 		}
 	}
 
 	statistic stat(total, block, limit);
 
-	if (load.size()) {
-		std::ifstream in(load, std::ios::in);
+	if (load_path.size()) {
+		std::ifstream in(load_path, std::ios::in);
 		in >> stat;
 		in.close();
-		summary |= stat.is_finished();
+		if (stat.is_finished()) stat.summary();
 	}
 
 	player play(play_args);
 	rndenv evil(evil_args);
 
 	while (!stat.is_finished()) {
+//		std::cerr << "======== Game " << stat.step() << " ========" << std::endl;
 		play.open_episode("~:" + evil.name());
 		evil.open_episode(play.name() + ":~");
 
@@ -69,6 +74,7 @@ int main(int argc, const char* argv[]) {
 		while (true) {
 			agent& who = game.take_turns(play, evil);
 			action move = who.take_action(game.state());
+//			std::cerr << game.state() << "#" << game.step() << " " << who.name() << ": " << move << std::endl;
 			if (game.apply_action(move) != true) break;
 			if (who.check_for_win(game.state())) break;
 		}
@@ -79,12 +85,8 @@ int main(int argc, const char* argv[]) {
 		evil.close_episode(win.name());
 	}
 
-	if (summary) {
-		stat.summary();
-	}
-
-	if (save.size()) {
-		std::ofstream out(save, std::ios::out | std::ios::trunc);
+	if (save_path.size()) {
+		std::ofstream out(save_path, std::ios::out | std::ios::trunc);
 		out << stat;
 		out.close();
 	}

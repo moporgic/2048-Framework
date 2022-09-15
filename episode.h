@@ -19,10 +19,7 @@
 #include "action.h"
 #include "agent.h"
 
-class statistic;
-
 class episode {
-friend class statistic;
 public:
 	episode() : ep_state(initial_state()), ep_score(0), ep_time(0) { ep_moves.reserve(10000); }
 

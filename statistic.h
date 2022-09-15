@@ -14,7 +14,6 @@
 #include <sstream>
 #include "board.h"
 #include "action.h"
-#include "agent.h"
 #include "episode.h"
 
 class statistic {
@@ -131,6 +130,9 @@ public:
 	}
 	episode& back() {
 		return data.back();
+	}
+	size_t step() const {
+		return count;
 	}
 
 	friend std::ostream& operator <<(std::ostream& out, const statistic& stat) {
