@@ -8,7 +8,7 @@
  */
 
 #pragma once
-#include <list>
+#include <deque>
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -35,7 +35,7 @@ public:
 	/**
 	 * show the statistic of last 'block' games
 	 *
-	 * the format would be
+	 * the format is
 	 * 1000   avg = 273901, max = 382324, ops = 241563 (170543|896715)
 	 *        512     100%   (0.3%)
 	 *        1024    99.7%  (0.2%)
@@ -44,24 +44,23 @@ public:
 	 *        8192    93.7%  (22.4%)
 	 *        16384   71.3%  (71.3%)
 	 *
-	 * where (block = 1000 by default)
-	 *  '1000': current index (n)
-	 *  'avg = 273901': the average score is 273901
-	 *  'max = 382324': the maximum score is 382324
+	 * where
+	 *  '1000': current index
+	 *  'avg = 273901, max = 382324': the average score is 273901, the maximum score is 382324
 	 *  'ops = 241563 (170543|896715)': the average speed is 241563
 	 *                                  the average speed of player is 170543
 	 *                                  the average speed of environment is 896715
-	 *  '93.7%': 93.7% (937 games) reached 8192-tiles (a.k.a. win rate of 8192-tile)
-	 *  '22.4%': 22.4% (224 games) terminated with 8192-tiles (the largest)
+	 *  '93.7%': 93.7% of the games reached 8192-tiles, i.e., win rate of 8192-tile
+	 *  '22.4%': 22.4% of the games terminated with 8192-tiles as the largest tile
 	 */
-	void show(bool tstat = true) const {
-		size_t blk = std::min(data.size(), block);
+	void show(bool tstat = true, size_t blk = 0) const {
+		size_t num = std::min(data.size(), blk ?: block);
 		size_t stat[64] = { 0 };
 		size_t sop = 0, pop = 0, eop = 0;
 		time_t sdu = 0, pdu = 0, edu = 0;
 		board::score sum = 0, max = 0;
 		auto it = data.end();
-		for (size_t i = 0; i < blk; i++) {
+		for (size_t i = 0; i < num; i++) {
 			auto& ep = *(--it);
 			sum += ep.score();
 			max = std::max(ep.score(), max);
@@ -78,7 +77,7 @@ public:
 		ff.copyfmt(std::cout);
 		std::cout << std::fixed << std::setprecision(0);
 		std::cout << count << "\t";
-		std::cout << "avg = " << (sum / blk) << ", ";
+		std::cout << "avg = " << (sum / num) << ", ";
 		std::cout << "max = " << (max) << ", ";
 		std::cout << "ops = " << (sop * 1000.0 / sdu);
 		std::cout <<     " (" << (pop * 1000.0 / pdu);
@@ -87,22 +86,19 @@ public:
 		std::cout.copyfmt(ff);
 
 		if (!tstat) return;
-		for (size_t t = 0, c = 0; c < blk; c += stat[t++]) {
+		for (size_t t = 0, c = 0; c < num; c += stat[t++]) {
 			if (stat[t] == 0) continue;
 			size_t accu = std::accumulate(std::begin(stat) + t, std::end(stat), size_t(0));
 			std::cout << "\t" << ((1 << t) & -2u); // type
-			std::cout << "\t" << (accu * 100.0 / blk) << "%"; // win rate
-			std::cout << "\t" "(" << (stat[t] * 100.0 / blk) << "%" ")"; // percentage of ending
+			std::cout << "\t" << (accu * 100.0 / num) << "%"; // win rate
+			std::cout << "\t" "(" << (stat[t] * 100.0 / num) << "%" ")"; // percentage of ending
 			std::cout << std::endl;
 		}
 		std::cout << std::endl;
 	}
 
 	void summary() const {
-		auto block_temp = block;
-		const_cast<statistic&>(*this).block = data.size();
-		show();
-		const_cast<statistic&>(*this).block = block_temp;
+		show(true, data.size());
 	}
 
 	bool is_finished() const {
@@ -121,9 +117,7 @@ public:
 	}
 
 	episode& at(size_t i) {
-		auto it = data.begin();
-		while (i--) it++;
-		return *it;
+		return data.at(i);
 	}
 	episode& front() {
 		return data.front();
@@ -154,5 +148,5 @@ private:
 	size_t block;
 	size_t limit;
 	size_t count;
-	std::list<episode> data;
+	std::deque<episode> data;
 };
