@@ -1,5 +1,5 @@
 /**
- * Framework for 2048 & 2048-like Games (C++ 11)
+ * Framework for 2048 & 2048-Like Games (C++ 11)
  * weight.h: Lookup table template for n-tuple network
  *
  * Author: Hung Guei

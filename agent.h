@@ -1,5 +1,5 @@
 /**
- * Framework for 2048 & 2048-like Games (C++ 11)
+ * Framework for 2048 & 2048-Like Games (C++ 11)
  * agent.h: Define the behavior of variants of agents including players and environments
  *
  * Author: Hung Guei

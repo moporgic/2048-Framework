@@ -1,5 +1,5 @@
 /**
- * Framework for 2048 & 2048-like Games (C++ 11)
+ * Framework for 2048 & 2048-Like Games (C++ 11)
  * episode.h: Data structure for storing an episode
  *
  * Author: Hung Guei
