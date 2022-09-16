@@ -72,7 +72,7 @@ public:
 		return out << '#' << ("URDL")[event() & 0b11];
 	}
 	std::istream& operator <<(std::istream& in) {
-		if (in.peek() == '#') {
+		if (in.peek() == '#' && in) {
 			char v;
 			in.ignore(1) >> v;
 			const char* opc = "URDL";
@@ -107,12 +107,12 @@ public:
 	}
 	std::istream& operator <<(std::istream& in) {
 		const char* idx = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		char v = in.peek();
-		unsigned pos = std::find(idx, idx + 16, v) - idx;
-		if (pos < 16) {
+		if (in.peek() != '#' && in) {
+			char v = in.peek();
+			unsigned pos = std::find(idx, idx + 16, v) - idx;
 			in.ignore(1) >> v;
 			unsigned tile = std::find(idx, idx + 36, v) - idx;
-			if (tile < 36) {
+			if (pos < 16 && tile < 36) {
 				operator =(action::place(pos, tile));
 				return in;
 			}
