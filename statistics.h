@@ -1,8 +1,8 @@
 /**
  * Framework for 2048 & 2048-like Games (C++ 11)
- * statistic.h: Utility for making statistical reports
+ * statistics.h: Utility for making statistical reports
  *
- * Author: Hung Guei (moporgic)
+ * Author: Hung Guei
  *         Computer Games and Intelligence (CGI) Lab, NYCU, Taiwan
  *         https://cgilab.nctu.edu.tw/
  */
@@ -16,16 +16,16 @@
 #include "action.h"
 #include "episode.h"
 
-class statistic {
+class statistics {
 public:
 	/**
 	 * the total episodes to run
-	 * the block size of statistic
+	 * the block size of statistics
 	 * the limit of saving records
 	 *
 	 * note that total >= limit >= block
 	 */
-	statistic(size_t total, size_t block = 0, size_t limit = 0)
+	statistics(size_t total, size_t block = 0, size_t limit = 0)
 		: total(total),
 		  block(block ? block : total),
 		  limit(limit ? limit : total),
@@ -33,7 +33,7 @@ public:
 
 public:
 	/**
-	 * show the statistic of last 'block' games
+	 * show the statistics of last 'block' games
 	 *
 	 * the format is
 	 * 1000   avg = 273901, max = 382324, ops = 241563 (170543|896715)
@@ -129,11 +129,11 @@ public:
 		return count;
 	}
 
-	friend std::ostream& operator <<(std::ostream& out, const statistic& stat) {
+	friend std::ostream& operator <<(std::ostream& out, const statistics& stat) {
 		for (const episode& rec : stat.data) out << rec << std::endl;
 		return out;
 	}
-	friend std::istream& operator >>(std::istream& in, statistic& stat) {
+	friend std::istream& operator >>(std::istream& in, statistics& stat) {
 		for (std::string line; std::getline(in, line) && line.size(); ) {
 			stat.data.emplace_back();
 			std::stringstream(line) >> stat.data.back();

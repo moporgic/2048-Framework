@@ -2,7 +2,7 @@
  * Framework for 2048 & 2048-like Games (C++ 11)
  * action.h: Define the behavior of actions for both players and environments
  *
- * Author: Hung Guei (moporgic)
+ * Author: Hung Guei
  *         Computer Games and Intelligence (CGI) Lab, NYCU, Taiwan
  *         https://cgilab.nctu.edu.tw/
  */

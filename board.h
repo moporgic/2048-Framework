@@ -2,7 +2,7 @@
  * Framework for 2048 & 2048-like Games (C++ 11)
  * board.h: Define the game state and basic operations of the game of 2048
  *
- * Author: Hung Guei (moporgic)
+ * Author: Hung Guei
  *         Computer Games and Intelligence (CGI) Lab, NYCU, Taiwan
  *         https://cgilab.nctu.edu.tw/
  */

@@ -2,7 +2,7 @@
  * Framework for 2048 & 2048-like Games (C++ 11)
  * agent.h: Define the behavior of variants of agents including players and environments
  *
- * Author: Hung Guei (moporgic)
+ * Author: Hung Guei
  *         Computer Games and Intelligence (CGI) Lab, NYCU, Taiwan
  *         https://cgilab.nctu.edu.tw/
  */
@@ -117,14 +117,14 @@ protected:
 };
 
 /**
- * random environment
+ * default random environment
  * add a new random tile to an empty cell
  * 2-tile: 90%
  * 4-tile: 10%
  */
-class rndenv : public random_agent {
+class random_placer : public random_agent {
 public:
-	rndenv(const std::string& args = "") : random_agent("name=rndenv role=environment " + args),
+	random_placer(const std::string& args = "") : random_agent("name=place role=placer " + args),
 		space({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }), popup(0, 9) {}
 
 	virtual action take_action(const board& after) {
@@ -143,12 +143,12 @@ private:
 };
 
 /**
- * random player
+ * random player, i.e., slider
  * select a legal action randomly
  */
-class player : public random_agent {
+class random_slider : public random_agent {
 public:
-	player(const std::string& args = "") : random_agent("name=player role=player " + args),
+	random_slider(const std::string& args = "") : random_agent("name=slide role=slider " + args),
 		opcode({ 0, 1, 2, 3 }) {}
 
 	virtual action take_action(const board& before) {

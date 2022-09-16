@@ -2,7 +2,7 @@
  * Framework for 2048 & 2048-like Games (C++ 11)
  * episode.h: Data structure for storing an episode
  *
- * Author: Hung Guei (moporgic)
+ * Author: Hung Guei
  *         Computer Games and Intelligence (CGI) Lab, NYCU, Taiwan
  *         https://cgilab.nctu.edu.tw/
  */
@@ -41,12 +41,12 @@ public:
 		ep_score += reward;
 		return true;
 	}
-	agent& take_turns(agent& play, agent& evil) {
+	agent& take_turns(agent& slide, agent& place) {
 		ep_time = millisec();
-		return step() < 2 || step() % 2 ? evil : play;
+		return step() < 2 || step() % 2 ? place : slide;
 	}
-	agent& last_turns(agent& play, agent& evil) {
-		return step() > 2 ? take_turns(evil, play) : evil;
+	agent& last_turns(agent& slide, agent& place) {
+		return step() > 2 ? take_turns(place, slide) : place;
 	}
 
 public:

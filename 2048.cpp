@@ -2,7 +2,7 @@
  * Framework for 2048 & 2048-like Games (C++ 11)
  * 2048.cpp: Main file for the 2048 framework
  *
- * Author: Hung Guei (moporgic)
+ * Author: Hung Guei
  *         Computer Games and Intelligence (CGI) Lab, NYCU, Taiwan
  *         https://cgilab.nctu.edu.tw/
  */
@@ -15,7 +15,7 @@
 #include "action.h"
 #include "agent.h"
 #include "episode.h"
-#include "statistic.h"
+#include "statistics.h"
 
 int main(int argc, const char* argv[]) {
 	std::cout << "2048-Demo: ";
@@ -23,7 +23,7 @@ int main(int argc, const char* argv[]) {
 	std::cout << std::endl << std::endl;
 
 	size_t total = 1000, block = 0, limit = 0;
-	std::string play_args, evil_args;
+	std::string slide_args, place_args;
 	std::string load_path, save_path;
 	for (int i = 1; i < argc; i++) {
 		std::string arg = argv[i];
@@ -41,10 +41,10 @@ int main(int argc, const char* argv[]) {
 			block = std::stoull(next_opt());
 		} else if (match("limit")) {
 			limit = std::stoull(next_opt());
-		} else if (match("play")) {
-			play_args = next_opt();
-		} else if (match("evil")) {
-			evil_args = next_opt();
+		} else if (match("slide") || match("play")) {
+			slide_args = next_opt();
+		} else if (match("place") || match("env")) {
+			place_args = next_opt();
 		} else if (match("load")) {
 			load_path = next_opt();
 		} else if (match("save")) {
@@ -52,42 +52,42 @@ int main(int argc, const char* argv[]) {
 		}
 	}
 
-	statistic stat(total, block, limit);
+	statistics stats(total, block, limit);
 
 	if (load_path.size()) {
 		std::ifstream in(load_path, std::ios::in);
-		in >> stat;
+		in >> stats;
 		in.close();
-		if (stat.is_finished()) stat.summary();
+		if (stats.is_finished()) stats.summary();
 	}
 
-	player play(play_args);
-	rndenv evil(evil_args);
+	random_slider slide(slide_args);
+	random_placer place(place_args);
 
-	while (!stat.is_finished()) {
-//		std::cerr << "======== Game " << stat.step() << " ========" << std::endl;
-		play.open_episode("~:" + evil.name());
-		evil.open_episode(play.name() + ":~");
+	while (!stats.is_finished()) {
+//		std::cerr << "======== Game " << stats.step() << " ========" << std::endl;
+		slide.open_episode("~:" + place.name());
+		place.open_episode(slide.name() + ":~");
 
-		stat.open_episode(play.name() + ":" + evil.name());
-		episode& game = stat.back();
+		stats.open_episode(slide.name() + ":" + place.name());
+		episode& game = stats.back();
 		while (true) {
-			agent& who = game.take_turns(play, evil);
+			agent& who = game.take_turns(slide, place);
 			action move = who.take_action(game.state());
 //			std::cerr << game.state() << "#" << game.step() << " " << who.name() << ": " << move << std::endl;
 			if (game.apply_action(move) != true) break;
 			if (who.check_for_win(game.state())) break;
 		}
-		agent& win = game.last_turns(play, evil);
-		stat.close_episode(win.name());
+		agent& win = game.last_turns(slide, place);
+		stats.close_episode(win.name());
 
-		play.close_episode(win.name());
-		evil.close_episode(win.name());
+		slide.close_episode(win.name());
+		place.close_episode(win.name());
 	}
 
 	if (save_path.size()) {
 		std::ofstream out(save_path, std::ios::out | std::ios::trunc);
-		out << stat;
+		out << stats;
 		out.close();
 	}
 
