@@ -48,8 +48,8 @@ public:
 	 *  '1000': current index
 	 *  'avg = 273901, max = 382324': the average score is 273901, the maximum score is 382324
 	 *  'ops = 241563 (170543|896715)': the average speed is 241563
-	 *                                  the average speed of player is 170543
-	 *                                  the average speed of environment is 896715
+	 *                                  the average speed of the slider is 170543
+	 *                                  the average speed of the placer is 896715
 	 *  '93.7%': 93.7% of the games reached 8192-tiles, i.e., win rate of 8192-tile
 	 *  '22.4%': 22.4% of the games terminated with 8192-tiles as the largest tile
 	 */

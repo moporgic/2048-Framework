@@ -65,7 +65,7 @@ public:
 public:
 
 	/**
-	 * place a tile (index value) to the specific position (1-d form index)
+	 * place a tile (index value) to the specific position (1-d index)
 	 * return 0 if the action is valid, or -1 if not
 	 */
 	reward place(unsigned pos, cell tile) {
